@@ -6,6 +6,7 @@
 #include <iostream>
 #include <vector>
 #include <regex>
+#include <optional>
 
 #include "../../../src/cs-utils/utils.hpp"
 #include "../../../src/cs-utils/convert.hpp"

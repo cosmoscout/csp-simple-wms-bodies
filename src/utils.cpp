@@ -75,7 +75,7 @@ void convertIsoDate(std::string date, boost::posix_time::ptime &time) {
         time = boost::posix_time::microsec_clock::universal_time();
         return;
     }
-    date.erase(std::remove_if(date.begin(), date.end(), std::ptr_fun(::ispunct)), date.end());
+    date.erase(std::remove_if(date.begin(), date.end(), [](unsigned char x){return std::ispunct(x);}), date.end());
     std::string dateSubStr = date.substr(0, date.find("T"));
     std::size_t pos = date.find("T");
     std::string timeSubStr = "T";

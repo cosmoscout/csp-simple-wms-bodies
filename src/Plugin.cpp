@@ -53,7 +53,7 @@ void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Plugin::Settings& o) {
-  cs::core::parseSection("csp-simple-bodies",
+  cs::core::parseSection("csp-simple-wms-bodies",
       [&] { o.mBodies = cs::core::parseMap<std::string, Plugin::Settings::Body>("bodies", j); });
 }
 
@@ -75,11 +75,11 @@ void Plugin::init() {
   mGuiManager->addSettingsSectionToSideBarFromHTML(
       "WMS", "panorama", "../share/resources/gui/wms_settings.html");
 
-  mGuiManager->getSideBar()->registerCallback<bool>(
-      "set_enable_interpolation", ([this](bool value) { mProperties->mEnableInterpolation = value; }));
+  //mGuiManager->getSideBar()->registerCallback<bool>(
+  //    "set_enable_interpolation", ([this](bool value) { mProperties->mEnableInterpolation = value; }));
 
-  mGuiManager->getSideBar()->registerCallback<bool>(
-      "set_enable_timespan", ([this](bool value) { mProperties->mEnableTimespan = value; }));
+  //mGuiManager->getSideBar()->registerCallback<bool>(
+  //    "set_enable_timespan", ([this](bool value) { mProperties->mEnableTimespan = value; }));
 
   for (auto const& bodySettings : mPluginSettings.mBodies) {
     auto anchor = mAllSettings->mAnchors.find(bodySettings.first);
@@ -105,7 +105,7 @@ void Plugin::init() {
     mSimpleBodyNodes.push_back(mSceneGraph->NewOpenGLNode(mSceneGraph->GetRoot(), body.get()));
     mSimpleBodies.push_back(body);
   }
-  mSolarSystem->pActiveBody.onChange().connect(
+  /* mSolarSystem->pActiveBody.onChange().connect(
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
         auto simpleBody = std::dynamic_pointer_cast<SimpleBody>(body);
 
@@ -113,19 +113,19 @@ void Plugin::init() {
           return;
         }
         removeTimeIntervall(mIntervalsOnTimeline);
-        mGuiManager->getSideBar()->callJavascript("clear_container", "set_wms");
+        // mGuiManager->getSideBar()->callJavascript("clear_container", "set_wms");
         for (auto const& wms : simpleBody->getWms()) {
           bool active = wms.mName == simpleBody->getActiveWms().mName;
-          mGuiManager->getSideBar()->callJavascript(
+          // mGuiManager->getSideBar()->callJavascript(
               "add_dropdown_value", "set_wms", wms.mName, wms.mName, active);
           if(active) {
             mIntervalsOnTimeline = simpleBody->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline);
           }
         }
-      });
+      }); */
 
-  mGuiManager->getSideBar()->registerCallback<std::string>(
+  /* mGuiManager->getSideBar()->registerCallback<std::string>(
         "set_wms", ([this](std::string const& name) {
           auto body = std::dynamic_pointer_cast<SimpleBody>(mSolarSystem->pActiveBody.get());
           if (body) {
@@ -134,7 +134,7 @@ void Plugin::init() {
             mIntervalsOnTimeline = body->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline);
           }
-        }));
+        })); */
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -147,7 +147,7 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->getTimeline()->callJavascript("remove_item", id);
+    // mGuiManager->getTimeline()->callJavascript("remove_item", id);
   }
 }
 
@@ -161,8 +161,8 @@ void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->getTimeline()->callJavascript("add_item", start, end, id, "Valid Time", "border-color: green",
-      "", "", "");
+    // mGuiManager->getTimeline()->callJavascript("add_item", start, end, id, "Valid Time", "border-color: green",
+    //   "", "", "");
   }
 }
 
@@ -178,9 +178,9 @@ void Plugin::deInit() {
     mSceneGraph->GetRoot()->DisconnectChild(simpleBodyNode);
   }
   
-  mGuiManager->getSideBar()->unregisterCallback("set_enable_interpolation");
-  mGuiManager->getSideBar()->unregisterCallback("set_enable_timespan");
-  mGuiManager->getSideBar()->unregisterCallback("set_wms");
+  // mGuiManager->getSideBar()->unregisterCallback("set_enable_interpolation");
+  // mGuiManager->getSideBar()->unregisterCallback("set_enable_timespan");
+  // mGuiManager->getSideBar()->unregisterCallback("set_wms");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
