@@ -235,15 +235,15 @@ bool SimpleBody::Do() {
       time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get()) + td * i;
       boost::posix_time::time_duration timeSinceStart;
       boost::posix_time::ptime startTime = time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
-      bool inInterval = timeInIntervals(startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+      bool inInterval = utils::timeInIntervals(startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
       if(mIntervalDuration != 0) {
         startTime -=  boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
       }
-      std::string timeString = timeToString(mFormat.c_str(), startTime);
+      std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
       if(mProperties->mEnableTimespan.get()) {
         boost::posix_time::time_duration timeDuration =  boost::posix_time::seconds(mIntervalDuration);
         boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
-        timeString += "/" + timeToString(mFormat.c_str(), intervalAfter);
+        timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
       }
       auto iteratorText1 = mTextureFilesBuffer.find(timeString);
       auto iteratorText2= mTexturesBuffer.find(timeString);
@@ -280,15 +280,15 @@ bool SimpleBody::Do() {
     time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
     boost::posix_time::time_duration timeSinceStart;
     boost::posix_time::ptime startTime = time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
-    bool inInterval = timeInIntervals(startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+    bool inInterval = utils::timeInIntervals(startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
     if(mIntervalDuration != 0) {
       startTime -=  boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
     }
     boost::posix_time::time_duration timeDuration = boost::posix_time::seconds(mIntervalDuration);
-    std::string timeString = timeToString(mFormat.c_str(), startTime);
+    std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
       if(mProperties->mEnableTimespan.get()) {
         boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
-        timeString += "/" + timeToString(mFormat.c_str(), intervalAfter);
+        timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
     }
     auto iterator = mTextures.find(timeString);
 
@@ -302,18 +302,18 @@ bool SimpleBody::Do() {
     }else {
       mDeafaultTextureUsed = true;
       mTexture = mDefaultTexture;
-      mCurentTexture = timeToString(mFormat.c_str(), startTime);
+      mCurentTexture = utils::timeToString(mFormat.c_str(), startTime);
     }
 
     if(mDeafaultTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
        mOtherTextureUsed = false;
     } else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
-      auto it = mTextures.find(timeToString(mFormat.c_str(), intervalAfter));
+      auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
       if(it != mTextures.end()) {
-        if(mCurentOtherTexture != timeToString(mFormat.c_str(), intervalAfter)) {
+        if(mCurentOtherTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
           mOtherTexture->UploadTexture(mTextureWidth, mTextureHeight ,it->second, false);
-          mCurentOtherTexture = timeToString(mFormat.c_str(), intervalAfter);
+          mCurentOtherTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
           mOtherTextureUsed = true;
         }
         mFade = (double)(intervalAfter - time).total_seconds() / (double)(intervalAfter - startTime).total_seconds();
@@ -388,7 +388,7 @@ bool SimpleBody::GetBoundingBox(VistaBoundingBox& bb) {
 
 boost::posix_time::ptime SimpleBody::getStartTime(boost::posix_time::ptime time) {
   boost::posix_time::time_duration timeSinceStart;
-  bool inInterval = timeInIntervals(time, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+  bool inInterval = utils::timeInIntervals(time, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
   boost::posix_time::ptime startTime = time - boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
   return startTime;
 }
@@ -419,7 +419,7 @@ void SimpleBody::setActiveWms(Wms wms) {
 
   if(mActiveWms.mTime.has_value()) {
     mTimeIntervals.clear();
-    parseIsoString(mActiveWms.mTime.value(), mTimeIntervals);
+    utils::parseIsoString(mActiveWms.mTime.value(), mTimeIntervals);
     mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
     mFormat = mTimeIntervals.at(0).mFormat;
     mTexture = mDefaultTexture;

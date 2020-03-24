@@ -153,8 +153,8 @@ void Plugin::init() {
 
 void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
   for(int i=0; i < timeIntervals.size(); i++) {
-    std::string start = timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
-    std::string end = timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
+    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
+    std::string end = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
     if(start == end) {
       end = "";
     }
@@ -167,8 +167,8 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
 
 void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
   for(int i=0; i < timeIntervals.size(); i++) {
-    std::string start = timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
-    std::string end = timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
+    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
+    std::string end = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
     if(start == end) {
       end = "";
     }

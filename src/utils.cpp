@@ -6,7 +6,7 @@
 
 #include "utils.hpp"
 
-namespace csp::simpleWmsBodies {
+namespace csp::simpleWmsBodies::utils {
 
 std::string timeToString(std::string format, boost::posix_time::ptime time) {
     std::stringstream sstr;
@@ -137,4 +137,4 @@ bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &t
 }
 
 
-}// namespace csp::simpleWmsBodies
+}// namespace csp::simpleWmsBodies::utils

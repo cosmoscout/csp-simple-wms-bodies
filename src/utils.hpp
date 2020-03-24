@@ -37,11 +37,15 @@ struct Wms {
     std::string mLayers;
 };
 
+namespace utils {
+
 std::string timeToString(std::string format, boost::posix_time::ptime time);
 void timeDuration(std::string isoString, int &duration, std::string &format);
 void parseIsoString(std::string isoString, std::vector<timeInterval> &timeIntervals);
 bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format);
 
-}// namespace csp::simpleWmsBodies
+} // namespace utils
+
+} // namespace csp::simpleWmsBodies
 
 #endif // CSP_WMS_UTILS_HPP
