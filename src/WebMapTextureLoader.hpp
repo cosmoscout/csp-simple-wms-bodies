@@ -29,7 +29,7 @@
 
 #include "utils.h"
 
-#include "ThreadPool.hpp"
+#include "../../../src/cs-utils/ThreadPool.hpp"
 
 namespace csp::simpleWmsBodies {
 
@@ -45,7 +45,7 @@ class WebMapTextureLoader {
   std::future<unsigned char*>loadTextureFromFileAsync(std::string fileName);
 
  private:
-    ThreadPool mThreadPool;
+    cs::utils::ThreadPool mThreadPool;
 };
 
 } // namespace csp::simpleWmsBodies

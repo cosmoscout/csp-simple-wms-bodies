@@ -65,13 +65,13 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
 }
 
 std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time, std::string requestStr, std::string centerName, std::string format){
-    return mThreadPool.Enqueue([=]() {
+    return mThreadPool.enqueue([=]() {
       return loadTexture(time, requestStr, centerName, format);
     });
 }
 
 std::future<unsigned char*> WebMapTextureLoader::loadTextureFromFileAsync(std::string fileName) {
-    return mThreadPool.Enqueue([=]() {
+    return mThreadPool.enqueue([=]() {
         int  width, height, bpp;
         int channels = 4;
         return stbi_load(fileName.c_str(), &width, &height, &bpp, channels);
