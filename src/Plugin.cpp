@@ -73,7 +73,7 @@ void Plugin::init() {
   mGuiManager->addPluginTabToSideBarFromHTML(
       "WMS", "panorama", "../share/resources/gui/wms_body_tab.html");
   mGuiManager->addSettingsSectionToSideBarFromHTML(
-      "WMS", "panorama", "../share/resources/gui/wms_settings.html");
+      "WMS", "panorama", "../share/resources/gui/wms_settings.html");                   // TODO: is it necessary?
 
   mGuiManager->getGui()->registerCallback("wms.setEnableInterpolation",
       "Enables or disables interpolation.",                                             // TODO: interpolation of what?
@@ -97,8 +97,8 @@ void Plugin::init() {
     
     std::shared_ptr<csp::simpleWmsBodies::SimpleBody> body;
 
-      body = std::make_shared<SimpleBody>(anchor->second.mCenter, bodySettings.second.mTexture,
-        anchor->second.mFrame, tStartExistence, tEndExistence, bodySettings.second.mWms, mTimeControl, mProperties);
+    body = std::make_shared<SimpleBody>(anchor->second.mCenter, bodySettings.second.mTexture,
+      anchor->second.mFrame, tStartExistence, tEndExistence, bodySettings.second.mWms, mTimeControl, mProperties);
 
     mSolarSystem->registerBody(body);
     mInputManager->registerSelectable(body);
@@ -115,6 +115,7 @@ void Plugin::init() {
         if (!simpleBody) {
           return;
         }
+
         removeTimeIntervall(mIntervalsOnTimeline);
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.gui.clearDropdown", "wms.setTilesImg");
@@ -123,6 +124,10 @@ void Plugin::init() {
           mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
             "wms.setTilesImg", wms.mName, wms.mName, active);
           if(active) {
+            // TODO: Copyright doesn't change
+            std::string javaCode = "$('#wms-img-data-copyright').tooltip({title: `© " + wms.mCopyringht + "`, placement: 'top'})";
+            mGuiManager->getGui()->executeJavascript(javaCode);
+
             mIntervalsOnTimeline = simpleBody->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline);
           }
@@ -140,6 +145,8 @@ void Plugin::init() {
             addTimeIntervall(mIntervalsOnTimeline);
           }
         }));
+
+  spdlog::info("Loading done.");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -152,7 +159,7 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    // mGuiManager->getTimeline()->callJavascript("remove_item", id);
+    // mGuiManager->getTimeline()->callJavascript("remove_item", id);       // TODO: fix
   }
 }
 
