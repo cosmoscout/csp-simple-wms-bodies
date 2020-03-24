@@ -7,8 +7,6 @@
 #include "Plugin.hpp"
 
 #include "../../../src/cs-core/InputManager.hpp"
-#include "../../../src/cs-core/Settings.hpp"
-#include "../../../src/cs-core/SolarSystem.hpp"
 #include "../../../src/cs-core/GuiManager.hpp"
 
 #include <VistaKernel/GraphicsManager/VistaSceneGraph.h>

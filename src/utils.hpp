@@ -7,10 +7,6 @@
 #ifndef CSP_WMS_UTILS_HPP
 #define CSP_WMS_UTILS_HPP
 
-#include <string>
-#include <boost/filesystem.hpp>
-#include <iostream>
-#include <vector>
 #include <regex>
 #include <optional>
 

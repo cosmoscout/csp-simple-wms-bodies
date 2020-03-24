@@ -117,7 +117,8 @@ SimpleBody::SimpleBody(std::string const& sCenterName, std::string texture,
 
   setActiveWms(mWms.at(0));
 
-  // create sphere grid geometry
+  // For rendering the sphere, we create a 2D-grid which is warped into a sphere in the vertex
+  // shader. The vertex positions are directly used as texture coordinates.
   std::vector<float>    vertices(GRID_RESOLUTION_X * GRID_RESOLUTION_Y * 2);
   std::vector<unsigned> indices((GRID_RESOLUTION_X - 1) * (2 + 2 * GRID_RESOLUTION_Y));
 
@@ -225,7 +226,7 @@ bool SimpleBody::Do() {
     return true;
   }
 
-  cs::utils::FrameTimings::ScopedTimer timer("Simple Planets");
+  cs::utils::FrameTimings::ScopedTimer timer("Simple Wms Planets");
   
 
   if(mActiveWms.mTime.has_value()) {
