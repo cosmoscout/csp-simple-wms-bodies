@@ -4,8 +4,8 @@
 //                        Copyright: (c) 2019 German Aerospace Center (DLR)                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CSP_SIMPLE_BODIES_PLUGIN_HPP
-#define CSP_SIMPLE_BODIES_PLUGIN_HPP
+#ifndef CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
+#define CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 
 #include "../../../src/cs-core/PluginBase.hpp"
 #include "SimpleBody.hpp"
@@ -45,6 +45,6 @@ class Plugin : public cs::core::PluginBase {
   void addTimeIntervall(std::vector<timeInterval> timeIntervals);
 };
 
-} // namespace csp::simplebodies
+} // namespace csp::simpleWmsBodies
 
-#endif // CSP_SIMPLE_BODIES_PLUGIN_HPP
+#endif // CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP

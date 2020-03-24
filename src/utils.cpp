@@ -4,7 +4,7 @@
 //                        Copyright: (c) 2019 German Aerospace Center (DLR)                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "utils.h"
+#include "utils.hpp"
 
 namespace csp::simpleWmsBodies {
 

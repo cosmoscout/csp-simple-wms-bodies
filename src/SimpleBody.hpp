@@ -4,8 +4,8 @@
 //                        Copyright: (c) 2019 German Aerospace Center (DLR)                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef CSP_SIMPLE_BODIES_SIMPLE_PLANET_HPP
-#define CSP_SIMPLE_BODIES_SIMPLE_PLANET_HPP
+#ifndef CSP_WMS_SIMPLE_BODIES_HPP
+#define CSP_WMS_SIMPLE_BODIES_HPP
 
 #include <VistaKernel/GraphicsManager/VistaOpenGLDraw.h>
 #include <VistaOGLExt/VistaBufferObject.h>
@@ -21,8 +21,6 @@
 #include "../../../src/cs-utils/utils.hpp"
 #include "../../../src/cs-utils/convert.hpp"
 #include "../../../src/cs-core/TimeControl.hpp"
-
-#include "utils.h"
 
 #include "WebMapTextureLoader.hpp"
 
@@ -96,7 +94,7 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   int mIntervalDuration;
   int mTextureWidth;
   int mTextureHeight;
-  int mPreFetch; //Amount of textures that gets prefetcht in every direction.
+  int mPreFetch; //Amount of textures that gets prefetched in every direction.
   std::vector<timeInterval> mTimeIntervals;
   bool mDeafaultTextureUsed;
 
@@ -129,6 +127,6 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   boost::posix_time::ptime getStartTime(boost::posix_time::ptime time);
 };
 
-} // namespace csp::simplebodies
+} // namespace csp::simpleWmsBodies
 
-#endif // CSP_SIMPLE_BODIES_SIMPLE_PLANET_HPP
+#endif // CSP_WMS_SIMPLE_BODIES_HPP

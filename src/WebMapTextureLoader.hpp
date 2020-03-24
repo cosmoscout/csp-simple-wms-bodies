@@ -27,7 +27,7 @@
 #include "../../../src/cs-utils/convert.hpp"
 #include "../../../src/cs-graphics/TextureLoader.hpp"
 
-#include "utils.h"
+#include "utils.hpp"
 
 #include "../../../src/cs-utils/ThreadPool.hpp"
 
