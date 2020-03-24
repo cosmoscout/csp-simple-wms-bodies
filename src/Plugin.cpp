@@ -34,7 +34,7 @@ namespace csp::simpleWmsBodies {
 
 void from_json(const nlohmann::json& j, Wms& o) {
   o.mName = cs::core::parseProperty<std::string>("name", j);
-  o.mCopyringht = cs::core::parseProperty<std::string>("copyright", j);
+  o.mCopyright = cs::core::parseProperty<std::string>("copyright", j);
   o.mUrl = cs::core::parseProperty<std::string>("url", j);
   o.mWidth = cs::core::parseProperty<int>("width", j);
   o.mHeight = cs::core::parseProperty<int>("height", j);
@@ -125,7 +125,7 @@ void Plugin::init() {
             "wms.setTilesImg", wms.mName, wms.mName, active);
           if(active) {
             // TODO: Copyright doesn't change
-            std::string javaCode = "$('#wms-img-data-copyright').tooltip({title: `© " + wms.mCopyringht + "`, placement: 'top'})";
+            std::string javaCode = "$('#wms-img-data-copyright').tooltip({title: `© " + wms.mCopyright + "`, placement: 'top'})";
             mGuiManager->getGui()->executeJavascript(javaCode);
 
             mIntervalsOnTimeline = simpleBody->getTimeIntervals();

@@ -22,7 +22,7 @@ struct timeInterval {
 
 struct Wms {
     std::string mName;
-    std::string mCopyringht;
+    std::string mCopyright;
     std::string mUrl;
     int mWidth;
     int mHeight;
