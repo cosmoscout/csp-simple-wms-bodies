@@ -39,6 +39,8 @@ class Plugin : public cs::core::PluginBase {
   std::shared_ptr<Properties>              mProperties;
   std::vector<timeInterval> mIntervalsOnTimeline;
 
+  int mActiveBodyConnection = -1;
+
   void removeTimeIntervall(std::vector<timeInterval> timeIntervals);
   void addTimeIntervall(std::vector<timeInterval> timeIntervals);
 };

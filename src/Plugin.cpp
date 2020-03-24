@@ -75,11 +75,13 @@ void Plugin::init() {
   mGuiManager->addSettingsSectionToSideBarFromHTML(
       "WMS", "panorama", "../share/resources/gui/wms_settings.html");
 
-  //mGuiManager->getSideBar()->registerCallback<bool>(
-  //    "set_enable_interpolation", ([this](bool value) { mProperties->mEnableInterpolation = value; }));
+  mGuiManager->getGui()->registerCallback("wms.setEnableInterpolation",
+      "Enables or disables interpolation.",                                             // TODO: interpolation of what?
+      std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
 
-  //mGuiManager->getSideBar()->registerCallback<bool>(
-  //    "set_enable_timespan", ([this](bool value) { mProperties->mEnableTimespan = value; }));
+  mGuiManager->getGui()->registerCallback("wms.setEnableTimeSpan",
+      "Enables or disables timespan.",                                                  // TODO: timespan of what?
+      std::function([this](bool enable) { mProperties->mEnableTimespan = enable; }));
 
   for (auto const& bodySettings : mPluginSettings.mBodies) {
     auto anchor = mAllSettings->mAnchors.find(bodySettings.first);
@@ -105,7 +107,8 @@ void Plugin::init() {
     mSimpleBodyNodes.push_back(mSceneGraph->NewOpenGLNode(mSceneGraph->GetRoot(), body.get()));
     mSimpleBodies.push_back(body);
   }
-  /* mSolarSystem->pActiveBody.onChange().connect(
+
+  mActiveBodyConnection = mSolarSystem->pActiveBody.connectAndTouch(
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
         auto simpleBody = std::dynamic_pointer_cast<SimpleBody>(body);
 
@@ -113,20 +116,22 @@ void Plugin::init() {
           return;
         }
         removeTimeIntervall(mIntervalsOnTimeline);
-        // mGuiManager->getSideBar()->callJavascript("clear_container", "set_wms");
+        mGuiManager->getGui()->callJavascript(
+            "CosmoScout.gui.clearDropdown", "wms.setTilesImg");
         for (auto const& wms : simpleBody->getWms()) {
           bool active = wms.mName == simpleBody->getActiveWms().mName;
-          // mGuiManager->getSideBar()->callJavascript(
-              "add_dropdown_value", "set_wms", wms.mName, wms.mName, active);
+          mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
+            "wms.setTilesImg", wms.mName, wms.mName, active);
           if(active) {
             mIntervalsOnTimeline = simpleBody->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline);
           }
         }
-      }); */
+      });
 
-  /* mGuiManager->getSideBar()->registerCallback<std::string>(
-        "set_wms", ([this](std::string const& name) {
+  mGuiManager->getGui()->registerCallback("wms.setTilesImg",
+        "Set the current planet's wms channel to the TileSource with the given name.",        // TODO: correct
+         std::function([this](std::string&& name) {
           auto body = std::dynamic_pointer_cast<SimpleBody>(mSolarSystem->pActiveBody.get());
           if (body) {
             removeTimeIntervall(mIntervalsOnTimeline);
@@ -134,7 +139,7 @@ void Plugin::init() {
             mIntervalsOnTimeline = body->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline);
           }
-        })); */
+        }));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,14 +166,15 @@ void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    // mGuiManager->getTimeline()->callJavascript("add_item", start, end, id, "Valid Time", "border-color: green",
-    //   "", "", "");
+    mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid Time", "border-color: green", "", "", "");
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Plugin::deInit() {
+  spdlog::info("Unloading plugin...");
+
   for (auto const& simpleBody : mSimpleBodies) {
     mSolarSystem->unregisterBody(simpleBody);
     mInputManager->unregisterSelectable(simpleBody);
@@ -177,10 +183,12 @@ void Plugin::deInit() {
   for (auto const& simpleBodyNode : mSimpleBodyNodes) {
     mSceneGraph->GetRoot()->DisconnectChild(simpleBodyNode);
   }
+
+  mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
   
-  // mGuiManager->getSideBar()->unregisterCallback("set_enable_interpolation");
-  // mGuiManager->getSideBar()->unregisterCallback("set_enable_timespan");
-  // mGuiManager->getSideBar()->unregisterCallback("set_wms");
+  mGuiManager->getGui()->unregisterCallback("wms.setEnableInterpolation");
+  mGuiManager->getGui()->unregisterCallback("wms.setEnableTimeSpan");
+  mGuiManager->getGui()->unregisterCallback("wms.setTilesImg");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
