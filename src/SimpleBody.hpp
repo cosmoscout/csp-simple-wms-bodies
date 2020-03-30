@@ -78,7 +78,6 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::shared_ptr<VistaTexture> mOtherTexture;
   std::shared_ptr<VistaTexture> mDefaultTexture;
   std::string mDefaultTextureFile;
-  unsigned char * mDefaultTexturePixels;
   int mDefTextWidth;
   int mDefTextHeight;
   std::string mRequest;
@@ -88,7 +87,7 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   int mTextureHeight;
   int mPreFetch; //Amount of textures that gets prefetched in every direction.
   std::vector<timeInterval> mTimeIntervals;
-  bool mDeafaultTextureUsed;
+  bool mDefaultTextureUsed;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;

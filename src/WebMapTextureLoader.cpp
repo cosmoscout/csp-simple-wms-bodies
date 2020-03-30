@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "WebMapTextureLoader.hpp"
+#include "../../../src/cs-utils/logger.hpp"
 
 namespace csp::simpleWmsBodies {
 
@@ -34,7 +35,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
         cs::utils::filesystem::createDirectoryRecursively(
             cacheDirPath, boost::filesystem::perms::all_all);
       } catch (std::exception& e) {
-        std::cerr << "Failed to create cache directory: " << e.what() << std::endl;
+        spdlog::error("Failed to create cache directory: '{}'!", e.what());
       }
     }
     requestStr += "&TIME=";
@@ -48,14 +49,22 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
     std::ofstream out;
     out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
     if (!out) {
-        std::cerr << "Failed to open for writing!" << std::endl;
+        spdlog::error("Failed to open '{}' for writing!", cacheFile);
     }
+
     curlpp::Easy request;
     request.setOpt(curlpp::options::Url(requestStr));
     request.setOpt(curlpp::options::WriteStream(&out));
     request.setOpt(curlpp::options::NoSignal(true));
-    request.perform();
-
+    try {
+        request.perform();
+    } catch (std::exception& e) {
+        spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
+        out.close();
+        remove(cacheFile.c_str());
+        return "Error";
+    }
+    
     out.close();
     if(curlpp::infos::ResponseCode::get(request) == 400) {
         remove(cacheFile.c_str());

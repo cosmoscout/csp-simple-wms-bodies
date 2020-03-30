@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "utils.hpp"
+#include "../../../src/cs-utils/logger.hpp"
 
 namespace csp::simpleWmsBodies::utils {
 
@@ -22,7 +23,7 @@ void matchDuration(const std::string &input, const std::regex& re, int &duration
     std::smatch match;
     std::regex_search(input, match, re);
     if (match.empty()) {
-        std::cout << "Pattern do NOT match" << std::endl;
+        spdlog::debug("Pattern does not match!");
         return;
     }
 
@@ -45,7 +46,7 @@ void matchDuration(const std::string &input, const std::regex& re, int &duration
                    1          * vec[5];   // seconds
 
     if (duration == 0) {
-        std::cout << "Not valid input" << std::endl;
+        spdlog::debug("Input is not valid!");
         return;
     }
 }

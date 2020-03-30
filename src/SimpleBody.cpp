@@ -281,6 +281,9 @@ bool SimpleBody::Do() {
       }
     }
 
+    bool fileError = false;
+
+    // Load Wms textures to buffer.
     for(auto it=mTextureFilesBuffer.begin(); it!=mTextureFilesBuffer.end(); ++it) {
       if(it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         std::string fileName = it->second.get();
@@ -288,6 +291,7 @@ bool SimpleBody::Do() {
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char *> > (
             it->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
         } else {
+          fileError = true;
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char *> > (
             it->first, mTextureLoader.loadTextureFromFileAsync(mDefaultTextureFile)));
         }
@@ -295,6 +299,7 @@ bool SimpleBody::Do() {
       }
     }
 
+    // Add loaded textures to map.
     for(auto it=mTexturesBuffer.begin(); it!=mTexturesBuffer.end(); ++it) {
       if(it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         mTextures.insert(std::pair<std::string, unsigned char *>(
@@ -319,22 +324,23 @@ bool SimpleBody::Do() {
     auto iterator = mTextures.find(timeString);
 
     // Use Wms texture inside the interval.
-    if(inInterval) {
+    if(inInterval && !fileError) {
       if(mCurentTexture != timeString && iterator != mTextures.end()) {
-          mDeafaultTextureUsed = false;
-          mWmsTexture->UploadTexture(mTextureWidth, mTextureHeight ,iterator->second, false);
-          mTexture = mWmsTexture;
-          mCurentTexture = timeString;
+        mDefaultTextureUsed = false;
+        mWmsTexture->UploadTexture(mTextureWidth, mTextureHeight ,iterator->second, false);
+        mTexture = mWmsTexture;
+        mCurentTexture = timeString;
       }
     // Use default planet texture.
     }else {
-      mDeafaultTextureUsed = true;
+      mDefaultTextureUsed = true;
       mTexture = mDefaultTexture;
       mCurentTexture = utils::timeToString(mFormat.c_str(), startTime);
     }
 
-    if(mDeafaultTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
+    if(mDefaultTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
        mOtherTextureUsed = false;
+    // Create fading between Wms textures.
     } else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
@@ -370,7 +376,6 @@ bool SimpleBody::Do() {
     mShaderDirty = false;
   }  
 
-  // set uniforms
   mShader.Bind();
 
   glm::vec3 sunDirection(1, 0, 0);
@@ -396,13 +401,14 @@ bool SimpleBody::Do() {
     sunDirection = mSolarSystem->getSunDirection(getWorldTransform()[3]);
   }
 
+  // Set uniforms.
   mShader.SetUniform(mShader.GetUniformLocation("uSunDirection"), sunDirection[0], sunDirection[1],
       sunDirection[2]);
   mShader.SetUniform(mShader.GetUniformLocation("uSunIlluminance"), sunIlluminance);
   mShader.SetUniform(mShader.GetUniformLocation("uAmbientBrightness"), ambientBrightness);
   mShader.SetUniform(mShader.GetUniformLocation("uSecondTexture"), mOtherTextureUsed);
   
-  // get modelview and projection matrices
+  // Get modelview and projection matrices.
   GLfloat glMatMV[16], glMatP[16];
   glGetFloatv(GL_MODELVIEW_MATRIX, &glMatMV[0]);
   glGetFloatv(GL_PROJECTION_MATRIX, &glMatP[0]);
@@ -488,7 +494,7 @@ void SimpleBody::setActiveWms(Wms wms) {
     mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
     mFormat = mTimeIntervals.at(0).mFormat;
     mTexture = mDefaultTexture;
-    mDeafaultTextureUsed = true;
+    mDefaultTextureUsed = true;
     mCurentTexture = "";
   } else {
     std::ofstream out;
@@ -496,13 +502,17 @@ void SimpleBody::setActiveWms(Wms wms) {
     out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
 
     if (!out) {
-      std::cerr << "Failed to open for writing!" << std::endl;
+      spdlog::error("Failed to open '{}' for writing!", cacheFile);
     }
     curlpp::Easy request;
     request.setOpt(curlpp::options::Url(requestStr));
     request.setOpt(curlpp::options::WriteStream(&out));
     request.setOpt(curlpp::options::NoSignal(true));
-    request.perform();
+    try {
+        request.perform();
+    } catch (std::exception& e) {
+        spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
+    }
     out.close();
 
     mTexture = cs::graphics::TextureLoader::loadFromFile(cacheFile);
