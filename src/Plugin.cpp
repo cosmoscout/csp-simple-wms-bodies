@@ -60,8 +60,8 @@ void from_json(const nlohmann::json& j, Plugin::Settings& o) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Plugin::Plugin() {
-  mProperties = std::make_shared<Properties>();
+Plugin::Plugin() 
+    : mProperties(std::make_shared<Properties>()) {
   // Create default logger for this plugin.
   spdlog::set_default_logger(cs::utils::logger::createLogger("csp-simple-wms-bodies"));
 }
@@ -76,14 +76,16 @@ void Plugin::init() {
   mGuiManager->addPluginTabToSideBarFromHTML(
       "WMS", "panorama", "../share/resources/gui/wms_body_tab.html");
   mGuiManager->addSettingsSectionToSideBarFromHTML(
-      "WMS", "panorama", "../share/resources/gui/wms_settings.html");                   // TODO: is it necessary?
+      "WMS", "panorama", "../share/resources/gui/wms_settings.html");
 
+  // Set whether to interpolate textures between timesteps. 
   mGuiManager->getGui()->registerCallback("wms.setEnableInterpolation",
-      "Enables or disables interpolation.",                                             // TODO: interpolation of what?
+      "Enables or disables interpolation.",
       std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
 
+  // Set whether to display the entire timespan.
   mGuiManager->getGui()->registerCallback("wms.setEnableTimeSpan",
-      "Enables or disables timespan.",                                                  // TODO: timespan of what?
+      "Enables or disables timespan.",
       std::function([this](bool enable) { mProperties->mEnableTimespan = enable; }));
 
   for (auto const& bodySettings : mPluginSettings.mBodies) {
