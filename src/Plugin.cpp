@@ -8,9 +8,12 @@
 
 #include "../../../src/cs-core/InputManager.hpp"
 #include "../../../src/cs-core/GuiManager.hpp"
+#include "../../../src/cs-utils/utils.hpp"
+#include "../../../src/cs-utils/logger.hpp"
 
 #include <VistaKernel/GraphicsManager/VistaSceneGraph.h>
 #include <VistaKernel/GraphicsManager/VistaTransformNode.h>
+#include <VistaKernelOpenSGExt/VistaOpenSGMaterialTools.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,18 +95,20 @@ void Plugin::init() {
     auto   existence       = cs::core::getExistenceFromSettings(*anchor);
     double tStartExistence = existence.first;
     double tEndExistence   = existence.second;
-    
-    std::shared_ptr<csp::simpleWmsBodies::SimpleBody> body;
 
-    body = std::make_shared<SimpleBody>(anchor->second.mCenter, bodySettings.second.mTexture,
+    auto body = std::make_shared<SimpleBody>(mGraphicsEngine, mSolarSystem, anchor->second.mCenter, bodySettings.second.mTexture,
       anchor->second.mFrame, tStartExistence, tEndExistence, bodySettings.second.mWms, mTimeControl, mProperties);
 
     mSolarSystem->registerBody(body);
     mInputManager->registerSelectable(body);
 
     body->setSun(mSolarSystem->getSun());
-    mSimpleBodyNodes.push_back(mSceneGraph->NewOpenGLNode(mSceneGraph->GetRoot(), body.get()));
+    auto parent = mSceneGraph->NewOpenGLNode(mSceneGraph->GetRoot(), body.get());
+    mSimpleBodyNodes.push_back(parent);
     mSimpleBodies.push_back(body);
+
+    VistaOpenSGMaterialTools::SetSortKeyOnSubtree(
+        parent, static_cast<int>(cs::utils::DrawOrder::ePlanets));
   }
 
   mActiveBodyConnection = mSolarSystem->pActiveBody.connectAndTouch(

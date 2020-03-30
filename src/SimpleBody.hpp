@@ -35,7 +35,8 @@ struct Properties {
 /// in equirectangular projection.
 class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
-  SimpleBody(std::string const& sCenterName, std::string texture,
+  SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
+      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, std::string texture,
       std::string const& sFrameName, double tStartExistence, double tEndExistence, std::vector<Wms> tWms, std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties = nullptr);
   ~SimpleBody() override;
 
@@ -64,6 +65,9 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   void setActiveWms(std::string wms);
 
  private:
+  std::shared_ptr<cs::core::GraphicsEngine> mGraphicsEngine;
+  std::shared_ptr<cs::core::SolarSystem>    mSolarSystem;
+
   std::vector<Wms> mWms;
   Wms mActiveWms;
   std::mutex mWmsMutex;
@@ -97,6 +101,10 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::shared_ptr<cs::core::TimeControl>             mTimeControl;
 
   glm::dvec3 mRadii;
+
+  bool mShaderDirty              = true;
+  int  mEnableLightingConnection = -1;
+  int  mEnableHDRConnection      = -1;
 
   static const std::string SPHERE_VERT;
   static const std::string SPHERE_FRAG;

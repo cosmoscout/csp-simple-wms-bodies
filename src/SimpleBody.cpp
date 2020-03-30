@@ -11,6 +11,8 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
+#include "../../../src/cs-core/GraphicsEngine.hpp"
+
 namespace csp::simpleWmsBodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -21,8 +23,7 @@ const unsigned GRID_RESOLUTION_Y = 100;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const std::string SimpleBody::SPHERE_VERT = R"(
-#version 330
-
+uniform vec3 uSunDirection;
 uniform vec3 uRadii;
 uniform mat4 uMatModelView;
 uniform mat4 uMatProjection;
@@ -51,19 +52,25 @@ void main()
     vPosition   = (uMatModelView * vec4(vPosition, 1.0)).xyz;
     vCenter     = (uMatModelView * vec4(0.0, 0.0, 0.0, 1.0)).xyz;
     gl_Position =  uMatProjection * vec4(vPosition, 1);
+
+    if (gl_Position.w > 0) {
+     gl_Position /= gl_Position.w;
+     if (gl_Position.z >= 1) {
+       gl_Position.z = 0.999999;
+     }
+    }
 }
 )";
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const std::string SimpleBody::SPHERE_FRAG = R"(
-#version 330
-
 uniform vec3 uSunDirection;
 uniform sampler2D uSurfaceTexture;
 uniform sampler2D uSecondSurfaceTexture;
 uniform sampler2D uDefaultTexture;
 uniform float uAmbientBrightness;
+uniform float uSunIlluminance;
 uniform float uFarClip;
 uniform float uFade;
 uniform bool uSecondTexture;
@@ -78,18 +85,35 @@ in vec2 vLonLat;
 // outputs
 layout(location = 0) out vec3 oColor;
 
+vec3 SRGBtoLINEAR(vec3 srgbIn)
+{
+  vec3 bLess = step(vec3(0.04045),srgbIn);
+  return mix( srgbIn/vec3(12.92), pow((srgbIn+vec3(0.055))/vec3(1.055),vec3(2.4)), bLess );
+}
+
 void main()
 {
-    vec3 normal = normalize(vPosition - vCenter);
-    
     vec4 texColor = texture(uSurfaceTexture, vTexCoords);
     vec3 defColor = texture(uDefaultTexture, vTexCoords).rgb;
-    oColor = mix(defColor, texColor.rgb, texColor.a);
+    oColor = mix(defColor, texColor.rgb, texColor.a); 
+    // Fade texture in.
     if(uSecondTexture) {
       vec4 secColorA = texture(uSecondSurfaceTexture, vTexCoords);
       vec3 secColor = mix(defColor, secColorA.rgb, secColorA.a);
       oColor = mix(secColor, oColor, uFade);
     }
+
+    #ifdef ENABLE_HDR
+      oColor = SRGBtoLINEAR(oColor);
+    #endif
+
+    oColor = oColor * uSunIlluminance;
+
+    #ifdef ENABLE_LIGHTING
+      vec3 normal = normalize(vPosition - vCenter);
+      float light = max(dot(normal, uSunDirection), 0.0);
+      oColor = mix(oColor*uAmbientBrightness, oColor, light);
+    #endif
 
     gl_FragDepth = length(vPosition) / uFarClip;
 }
@@ -97,9 +121,12 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SimpleBody::SimpleBody(std::string const& sCenterName, std::string texture,
+SimpleBody::SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
+      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, std::string texture,
     std::string const& sFrameName, double tStartExistence, double tEndExistence, std::vector<Wms> tWms, std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
+    , mGraphicsEngine(graphicsEngine)
+    , mSolarSystem(solarSystem)
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
     , mWmsTexture(new VistaTexture(GL_TEXTURE_2D))
     , mDefaultTexture(new VistaTexture(GL_TEXTURE_2D))
@@ -157,10 +184,10 @@ SimpleBody::SimpleBody(std::string const& sCenterName, std::string texture,
   mSphereIBO.Release();
   mSphereVBO.Release();
 
-  // create sphere shader
-  mShader.InitVertexShaderFromString(SPHERE_VERT);
-  mShader.InitFragmentShaderFromString(SPHERE_FRAG);
-  mShader.Link();
+  // Recreate the shader if lighting or HDR rendering mode are toggled.
+  mEnableLightingConnection =
+      mGraphicsEngine->pEnableLighting.connect([this](bool) { mShaderDirty = true; });
+  mEnableHDRConnection = mGraphicsEngine->pEnableHDR.connect([this](bool) { mShaderDirty = true; });
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -169,6 +196,9 @@ SimpleBody::~SimpleBody() {
   for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
     stbi_image_free(it->second);
   }
+
+  mGraphicsEngine->pEnableLighting.disconnect(mEnableLightingConnection);
+  mGraphicsEngine->pEnableHDR.disconnect(mEnableHDRConnection);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -184,7 +214,7 @@ bool SimpleBody::getIntersection(
 
   glm::dmat4 transform = glm::inverse(getWorldTransform());
 
-  // Transform ray into planet coordinate system
+  // Transform ray into planet coordinate system.
   glm::dvec4 origin(rayOrigin, 1.0);
   origin = transform * origin;
 
@@ -209,6 +239,7 @@ bool SimpleBody::getIntersection(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 double SimpleBody::getHeight(glm::dvec2 lngLat) const {
+  // This is why we call them 'SimpleBodies'.
   return 0;
 }
 
@@ -227,7 +258,6 @@ bool SimpleBody::Do() {
   }
 
   cs::utils::FrameTimings::ScopedTimer timer("Simple Wms Planets");
-  
 
   if(mActiveWms.mTime.has_value()) {
     boost::posix_time::ptime time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
@@ -321,9 +351,60 @@ bool SimpleBody::Do() {
       }
     }
   }
+
+  if (mShaderDirty) {
+    mShader = VistaGLSLShader();
+
+    // (Re-)create sphere shader.
+    std::string defines = "#version 330\n";
+
+    if (mGraphicsEngine->pEnableHDR.get()) {
+      defines += "#define ENABLE_HDR\n";
+    }
+
+    if (mGraphicsEngine->pEnableLighting.get()) {
+      defines += "#define ENABLE_LIGHTING\n";
+    }
+
+    mShader.InitVertexShaderFromString(defines + SPHERE_VERT);
+    mShader.InitFragmentShaderFromString(defines + SPHERE_FRAG);
+    mShader.Link();
+
+    mShaderDirty = false;
+  }  
+
   // set uniforms
   mShader.Bind();
+
+  glm::vec3 sunDirection(1, 0, 0);
+  float     sunIlluminance(1.f);
+  float     ambientBrightness(mGraphicsEngine->pAmbientBrightness.get());
+
+  if (getCenterName() == "Sun") {
+    // If the SimpleBody is actually the sun, we have to calculate the lighting differently.
+    if (mGraphicsEngine->pEnableHDR.get()) {
+      double sceneScale = 1.0 / mSolarSystem->getObserver().getAnchorScale();
+      sunIlluminance    = mSolarSystem->pSunLuminousPower.get() /
+                       (sceneScale * sceneScale * mRadii[0] * mRadii[0] * 4.0 * glm::pi<double>());
+    }
+
+    ambientBrightness = 1.0f;
+
+  } else if (mSun) {
+    // For all other bodies we can use the utility methods from the SolarSystem.
+    if (mGraphicsEngine->pEnableHDR.get()) {
+      sunIlluminance = mSolarSystem->getSunIlluminance(getWorldTransform()[3]);
+    }
+
+    sunDirection = mSolarSystem->getSunDirection(getWorldTransform()[3]);
+  }
+
+  mShader.SetUniform(mShader.GetUniformLocation("uSunDirection"), sunDirection[0], sunDirection[1],
+      sunDirection[2]);
+  mShader.SetUniform(mShader.GetUniformLocation("uSunIlluminance"), sunIlluminance);
+  mShader.SetUniform(mShader.GetUniformLocation("uAmbientBrightness"), ambientBrightness);
   mShader.SetUniform(mShader.GetUniformLocation("uSecondTexture"), mOtherTextureUsed);
+  
   // get modelview and projection matrices
   GLfloat glMatMV[16], glMatP[16];
   glGetFloatv(GL_MODELVIEW_MATRIX, &glMatMV[0]);
@@ -341,19 +422,6 @@ bool SimpleBody::Do() {
   mShader.SetUniform(
       mShader.GetUniformLocation("uFarClip"), cs::utils::getCurrentFarClipDistance());
 
-  if (getCenterName() != "Sun") {
-    auto sunTransform    = glm::make_mat4x4(glMatMV) * glm::mat4(mSun->getWorldTransform());
-    auto planetTransform = matMV;
-
-    auto sunDirection = glm::vec3(sunTransform[3]) - glm::vec3(planetTransform[3]);
-    sunDirection      = glm::normalize(sunDirection);
-
-    mShader.SetUniform(mShader.GetUniformLocation("uSunDirection"), sunDirection[0],
-        sunDirection[1], sunDirection[2]);
-    mShader.SetUniform(mShader.GetUniformLocation("uAmbientBrightness"), 0.2f);
-  } else {
-    mShader.SetUniform(mShader.GetUniformLocation("uAmbientBrightness"), 1.f);
-  }
   if(mOtherTextureUsed) {
     mShader.SetUniform(mShader.GetUniformLocation("uFade"), mFade);
     mOtherTexture->Bind(GL_TEXTURE2);
@@ -361,13 +429,13 @@ bool SimpleBody::Do() {
   mTexture->Bind(GL_TEXTURE0);
   mDefaultTexture->Bind(GL_TEXTURE1);
 
-  // draw
+  // Draw.
   mSphereVAO.Bind();
   glDrawElements(GL_TRIANGLE_STRIP, (GRID_RESOLUTION_X - 1) * (2 + 2 * GRID_RESOLUTION_Y),
       GL_UNSIGNED_INT, nullptr);
   mSphereVAO.Release();
 
-  // clean up
+  // Clean up.
   mTexture->Unbind(GL_TEXTURE0);
   mDefaultTexture->Unbind(GL_TEXTURE1);
   if(mOtherTextureUsed) {
