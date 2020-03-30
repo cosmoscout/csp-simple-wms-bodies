@@ -62,12 +62,14 @@ void from_json(const nlohmann::json& j, Plugin::Settings& o) {
 
 Plugin::Plugin() {
   mProperties = std::make_shared<Properties>();
+  // Create default logger for this plugin.
+  spdlog::set_default_logger(cs::utils::logger::createLogger("csp-simple-wms-bodies"));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Plugin::init() {
-  std::cout << "Loading: CosmoScout VR Plugin Simple WMS Bodies" << std::endl;
+  spdlog::info("Loading plugin...");
 
   mPluginSettings = mAllSettings->mPlugins.at("csp-simple-wms-bodies");
 
@@ -199,6 +201,8 @@ void Plugin::deInit() {
   mGuiManager->getGui()->unregisterCallback("wms.setEnableInterpolation");
   mGuiManager->getGui()->unregisterCallback("wms.setEnableTimeSpan");
   mGuiManager->getGui()->unregisterCallback("wms.setTilesImg");
+
+  spdlog::info("Unloading done.");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
