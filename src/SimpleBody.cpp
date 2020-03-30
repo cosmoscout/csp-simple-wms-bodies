@@ -122,25 +122,21 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleBody::SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
-      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, std::string texture,
+      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, std::string sTexture,
     std::string const& sFrameName, double tStartExistence, double tEndExistence, std::vector<Wms> tWms, std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
     , mGraphicsEngine(graphicsEngine)
     , mSolarSystem(solarSystem)
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
     , mWmsTexture(new VistaTexture(GL_TEXTURE_2D))
-    , mDefaultTexture(new VistaTexture(GL_TEXTURE_2D))
+    // , mDefaultTexture(new VistaTexture(GL_TEXTURE_2D))
+    , mDefaultTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
     , mOtherTexture(new VistaTexture(GL_TEXTURE_2D)) {
   pVisibleRadius = mRadii[0];
   mTimeControl = timeControl;
   mProperties = properties;
   mWms = tWms;
-
-  mDefaultTextureFile = texture;
-  int  bpp;
-  int channels = 4;
-  unsigned char* mDefaultTexturePixels = stbi_load(mDefaultTextureFile.c_str(), &mDefTextWidth, &mDefTextHeight, &bpp, channels);
-  mDefaultTexture->UploadTexture(mDefTextWidth, mDefTextHeight, mDefaultTexturePixels);
+  mDefaultTextureFile = sTexture;
 
   setActiveWms(mWms.at(0));
 
@@ -192,7 +188,6 @@ SimpleBody::SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphics
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleBody::~SimpleBody() {
-  stbi_image_free(mDefaultTexturePixels);
   for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
     stbi_image_free(it->second);
   }
@@ -323,6 +318,7 @@ bool SimpleBody::Do() {
     }
     auto iterator = mTextures.find(timeString);
 
+    // Use Wms texture inside the interval.
     if(inInterval) {
       if(mCurentTexture != timeString && iterator != mTextures.end()) {
           mDeafaultTextureUsed = false;
@@ -330,6 +326,7 @@ bool SimpleBody::Do() {
           mTexture = mWmsTexture;
           mCurentTexture = timeString;
       }
+    // Use default planet texture.
     }else {
       mDeafaultTextureUsed = true;
       mTexture = mDefaultTexture;
@@ -465,14 +462,13 @@ boost::posix_time::ptime SimpleBody::getStartTime(boost::posix_time::ptime time)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SimpleBody::setActiveWms(Wms wms) {
-  static bool firstCall = true;
-  if(wmsIninialized) {
+  if(wmsInitialized) {
     std::lock_guard<std::mutex> guard(mWmsMutex);
     for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
       stbi_image_free(it->second);
     }
   }
-  wmsIninialized = true;
+  wmsInitialized = true;
   mTextures.clear();
   mTextureFilesBuffer.clear();
   mTexturesBuffer.clear();
