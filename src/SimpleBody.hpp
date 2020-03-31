@@ -60,10 +60,10 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::vector<Wms> getWms();
   Wms getActiveWms();
 
-  std::vector<timeInterval> getTimeIntervals();
-
   void setActiveWms(Wms wms);
   void setActiveWms(std::string wms);
+
+  std::vector<timeInterval> getTimeIntervals();
 
  private:
   std::shared_ptr<cs::core::GraphicsEngine> mGraphicsEngine;
@@ -86,7 +86,7 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   int mIntervalDuration;
   int mTextureWidth;
   int mTextureHeight;
-  int mPreFetch; //Amount of textures that gets prefetched in every direction.
+  int mPreFetch;      ///Amount of textures that gets prefetched in every direction.
   std::vector<timeInterval> mTimeIntervals;
   bool mDefaultTextureUsed;
 
@@ -98,7 +98,7 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   WebMapTextureLoader mTextureLoader;
 
   std::shared_ptr<const cs::scene::CelestialObject> mSun;
-  std::shared_ptr<cs::core::TimeControl>             mTimeControl;
+  std::shared_ptr<cs::core::TimeControl>            mTimeControl;
 
   glm::dvec3 mRadii;
 
@@ -109,7 +109,7 @@ class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   static const std::string SPHERE_VERT;
   static const std::string SPHERE_FRAG;
 
-  std::map<std::string, std::future<std::string> > mTextureFilesBuffer;
+  std::map<std::string, std::future<std::string> >     mTextureFilesBuffer;
   std::map<std::string, std::future<unsigned char *> > mTexturesBuffer;
 
   std::map<std::string, unsigned char *> mTextures;

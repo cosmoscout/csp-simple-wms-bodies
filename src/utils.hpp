@@ -14,22 +14,24 @@
 
 namespace csp::simpleWmsBodies {
 
+/// Struct of timeintervalls of the data set
 struct timeInterval {
     boost::posix_time::ptime startTime;
     boost::posix_time::ptime endTime;
     std::string mFormat;
     int mIntervalDuration;
-};
+}; 
 
+/// A single WMS data set.
 struct Wms {
-    std::string mName;
-    std::string mCopyright;
-    std::string mUrl;
-    int mWidth;
-    int mHeight;
-    std::optional<std::string> mTime;
-    std::optional<int> preFetch;
-    std::string mLayers;
+    std::string mName;                // The name of the data set as shown in the UI.
+    std::string mCopyright;           // The copyright holder of the data set (also shown in the UI).
+    std::string mUrl;                 // The URL of the mapserver including the "SERVICE=wms" parameter.
+    int mWidth;                       // The width of the WMS image.
+    int mHeight;                      // The height of the WMS image.
+    std::optional<std::string> mTime; // Time intervals of WMS images.
+    std::optional<int> preFetch;      // The amount of textures that gets prefetched in every direction.
+    std::string mLayers;              // A comma,seperated list of WMS layers.
 };
 
 namespace utils {

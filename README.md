@@ -14,7 +14,7 @@ This plugin can be enabled with the following configuration in your `settings.js
     "csp-simple-wms-bodies": {
       "bodies": {
         <anchor name>: {
-          "texture": <string>,        // The path to surface texture
+          "texture": <string>,        // The path to surface texture.
           "wms": [
             {
               "name": <string>,       // The name of the data set as shown in the UI.

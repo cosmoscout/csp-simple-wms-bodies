@@ -124,6 +124,7 @@ void Plugin::init() {
           return;
         }
 
+        // Remove time intervalls of the old body.
         removeTimeIntervall(mIntervalsOnTimeline);
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.gui.clearDropdown", "wms.setTilesImg");

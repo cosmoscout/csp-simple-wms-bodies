@@ -13,15 +13,20 @@ namespace csp::simpleWmsBodies {
 
 class WebMapTextureLoader {
  public:
-  /// Creates a new ThreadPool with the specified amount of threads.
+  /// Create a new ThreadPool with the specified amount of threads.
   WebMapTextureLoader();
+
   ~WebMapTextureLoader();
 
+  /// Async WMS texture loader.
   std::future<std::string> loadTextureAsync(std::string time, std::string requestStr, 
         std::string centerName, std::string format);
+
+  /// WMS texture loader.
   std::string loadTexture(std::string time, std::string requestStr, std::string name, 
         std::string format);
 
+  /// Load WMS texture from file using stbi.
   std::future<unsigned char*>loadTextureFromFileAsync(std::string fileName);
 
  private:
