@@ -31,15 +31,15 @@ struct Properties {
 
 /// This is just a sphere with a texture, attached to the given SPICE frame. The texture should be
 /// in equirectangular projection.
-class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
+class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
-  SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
+  SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
       std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, 
       std::string sTexture, std::string const& sFrameName, double tStartExistence, 
       double tEndExistence, std::vector<Wms> tWms, 
       std::shared_ptr<cs::core::TimeControl> timeControl, 
       std::shared_ptr<Properties> properties = nullptr);
-  ~SimpleBody() override;
+  ~SimpleWMSBody() override;
 
   /// The sun object is used for lighting computation.
   void setSun(std::shared_ptr<const cs::scene::CelestialObject> const& sun);

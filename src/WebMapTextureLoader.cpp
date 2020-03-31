@@ -71,6 +71,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
     } catch (std::exception& e) {
         spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
         out.close();
+        std::cout << "Removing file " << cacheFile << std::endl;
         remove(cacheFile.c_str());
         return "Error";
     }

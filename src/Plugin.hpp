@@ -7,7 +7,7 @@
 #ifndef CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 #define CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 
-#include "SimpleBody.hpp"
+#include "SimpleWMSBody.hpp"
 
 #include "../../../src/cs-core/PluginBase.hpp"
 
@@ -38,11 +38,11 @@ class Plugin : public cs::core::PluginBase {
   void deInit() override;
 
  private:
-  Settings                                 mPluginSettings;
-  std::vector<std::shared_ptr<SimpleBody>> mSimpleBodies;
-  std::vector<VistaOpenGLNode*>            mSimpleBodyNodes;
-  std::shared_ptr<Properties>              mProperties;
-  std::vector<timeInterval>                mIntervalsOnTimeline;
+  Settings                                    mPluginSettings;
+  std::vector<std::shared_ptr<SimpleWMSBody>> mSimpleWMSBodies;
+  std::vector<VistaOpenGLNode*>               mSimpleWMSBodyNodes;
+  std::shared_ptr<Properties>                 mProperties;
+  std::vector<timeInterval>                   mIntervalsOnTimeline;
 
   int mActiveBodyConnection = -1;
 

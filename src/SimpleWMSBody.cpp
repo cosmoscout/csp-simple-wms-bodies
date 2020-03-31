@@ -4,7 +4,7 @@
 //                        Copyright: (c) 2019 German Aerospace Center (DLR)                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "SimpleBody.hpp"
+#include "SimpleWMSBody.hpp"
 
 #include "../../../src/cs-core/GraphicsEngine.hpp"
 #include "../../../src/cs-graphics/TextureLoader.hpp"
@@ -29,7 +29,7 @@ const unsigned GRID_RESOLUTION_Y = 100;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const std::string SimpleBody::SPHERE_VERT = R"(
+const std::string SimpleWMSBody::SPHERE_VERT = R"(
 uniform vec3 uSunDirection;
 uniform vec3 uRadii;
 uniform mat4 uMatModelView;
@@ -71,7 +71,7 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const std::string SimpleBody::SPHERE_FRAG = R"(
+const std::string SimpleWMSBody::SPHERE_FRAG = R"(
 uniform vec3 uSunDirection;
 uniform sampler2D uSurfaceTexture;
 uniform sampler2D uSecondSurfaceTexture;
@@ -128,7 +128,7 @@ void main()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SimpleBody::SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
+SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
       std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, 
       std::string sTexture, std::string const& sFrameName, double tStartExistence, 
       double tEndExistence, std::vector<Wms> tWms, 
@@ -196,7 +196,7 @@ SimpleBody::SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphics
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SimpleBody::~SimpleBody() {
+SimpleWMSBody::~SimpleWMSBody() {
   for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
     stbi_image_free(it->second);
   }
@@ -207,13 +207,13 @@ SimpleBody::~SimpleBody() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleBody::setSun(std::shared_ptr<const cs::scene::CelestialObject> const& sun) {
+void SimpleWMSBody::setSun(std::shared_ptr<const cs::scene::CelestialObject> const& sun) {
   mSun = sun;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool SimpleBody::getIntersection(
+bool SimpleWMSBody::getIntersection(
     glm::dvec3 const& rayOrigin, glm::dvec3 const& rayDir, glm::dvec3& pos) const {
 
   glm::dmat4 transform = glm::inverse(getWorldTransform());
@@ -242,20 +242,20 @@ bool SimpleBody::getIntersection(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-double SimpleBody::getHeight(glm::dvec2 lngLat) const {
+double SimpleWMSBody::getHeight(glm::dvec2 lngLat) const {
   // This is why we call them 'SimpleBodies'.
   return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-glm::dvec3 SimpleBody::getRadii() const {
+glm::dvec3 SimpleWMSBody::getRadii() const {
   return mRadii;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool SimpleBody::Do() {
+bool SimpleWMSBody::Do() {
   std::lock_guard<std::mutex> guard(mWmsMutex);
   if (!getIsInExistence() || !pVisible.get()) {
     return true;
@@ -401,7 +401,7 @@ bool SimpleBody::Do() {
   float     ambientBrightness(mGraphicsEngine->pAmbientBrightness.get());
 
   if (getCenterName() == "Sun") {
-    // If the SimpleBody is actually the sun, we have to calculate the lighting differently.
+    // If the SimpleWMSBody is actually the sun, we have to calculate the lighting differently.
     if (mGraphicsEngine->pEnableHDR.get()) {
       double sceneScale = 1.0 / mSolarSystem->getObserver().getAnchorScale();
       sunIlluminance    = mSolarSystem->pSunLuminousPower.get() /
@@ -470,13 +470,13 @@ bool SimpleBody::Do() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool SimpleBody::GetBoundingBox(VistaBoundingBox& bb) {
+bool SimpleWMSBody::GetBoundingBox(VistaBoundingBox& bb) {
   return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-boost::posix_time::ptime SimpleBody::getStartTime(boost::posix_time::ptime time) {
+boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime time) {
   boost::posix_time::time_duration timeSinceStart;
   bool inInterval = 
       utils::timeInIntervals(time, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
@@ -487,7 +487,7 @@ boost::posix_time::ptime SimpleBody::getStartTime(boost::posix_time::ptime time)
  
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleBody::setActiveWms(Wms wms) {
+void SimpleWMSBody::setActiveWms(Wms wms) {
   if(wmsInitialized) {
     std::lock_guard<std::mutex> guard(mWmsMutex);
     for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
@@ -540,7 +540,7 @@ void SimpleBody::setActiveWms(Wms wms) {
   }
 }
 
-void SimpleBody::setActiveWms(std::string wms) {
+void SimpleWMSBody::setActiveWms(std::string wms) {
   for(int i=0; i < mWms.size();i++) {
     if(wms == mWms.at(i).mName) {
       setActiveWms(mWms.at(i));
@@ -548,19 +548,19 @@ void SimpleBody::setActiveWms(std::string wms) {
   }
 }
 
-std::vector<Wms> SimpleBody::getWms() {
+std::vector<Wms> SimpleWMSBody::getWms() {
   return mWms;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Wms SimpleBody::getActiveWms() {
+Wms SimpleWMSBody::getActiveWms() {
   return mActiveWms;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<timeInterval> SimpleBody::getTimeIntervals() {
+std::vector<timeInterval> SimpleWMSBody::getTimeIntervals() {
   return mTimeIntervals;
 }
 

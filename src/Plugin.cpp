@@ -100,7 +100,7 @@ void Plugin::init() {
     double tStartExistence = existence.first;
     double tEndExistence   = existence.second;
 
-    auto body = std::make_shared<SimpleBody>(mGraphicsEngine, mSolarSystem, anchor->second.mCenter,
+    auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem, anchor->second.mCenter,
       bodySettings.second.mTexture, anchor->second.mFrame, tStartExistence, tEndExistence,
       bodySettings.second.mWms, mTimeControl, mProperties);
 
@@ -109,8 +109,8 @@ void Plugin::init() {
 
     body->setSun(mSolarSystem->getSun());
     auto parent = mSceneGraph->NewOpenGLNode(mSceneGraph->GetRoot(), body.get());
-    mSimpleBodyNodes.push_back(parent);
-    mSimpleBodies.push_back(body);
+    mSimpleWMSBodyNodes.push_back(parent);
+    mSimpleWMSBodies.push_back(body);
 
     VistaOpenSGMaterialTools::SetSortKeyOnSubtree(
         parent, static_cast<int>(cs::utils::DrawOrder::ePlanets));
@@ -118,9 +118,9 @@ void Plugin::init() {
 
   mActiveBodyConnection = mSolarSystem->pActiveBody.connectAndTouch(
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
-        auto simpleBody = std::dynamic_pointer_cast<SimpleBody>(body);
+        auto simpleWMSBody = std::dynamic_pointer_cast<SimpleWMSBody>(body);
 
-        if (!simpleBody) {
+        if (!simpleWMSBody) {
           return;
         }
 
@@ -128,8 +128,8 @@ void Plugin::init() {
         removeTimeIntervall(mIntervalsOnTimeline);
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.gui.clearDropdown", "wms.setTilesImg");
-        for (auto const& wms : simpleBody->getWms()) {
-          bool active = wms.mName == simpleBody->getActiveWms().mName;
+        for (auto const& wms : simpleWMSBody->getWms()) {
+          bool active = wms.mName == simpleWMSBody->getActiveWms().mName;
           mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
             "wms.setTilesImg", wms.mName, wms.mName, active);
           if(active) {
@@ -138,7 +138,7 @@ void Plugin::init() {
               + wms.mCopyright + "`, placement: 'top'})";
             mGuiManager->getGui()->executeJavascript(javaCode);
 
-            mIntervalsOnTimeline = simpleBody->getTimeIntervals();
+            mIntervalsOnTimeline = simpleWMSBody->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline);
           }
         }
@@ -147,7 +147,7 @@ void Plugin::init() {
   mGuiManager->getGui()->registerCallback("wms.setTilesImg",
         "Set the current planet's wms channel to the TileSource with the given name.",
          std::function([this](std::string&& name) {
-          auto body = std::dynamic_pointer_cast<SimpleBody>(mSolarSystem->pActiveBody.get());
+          auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
           if (body) {
             removeTimeIntervall(mIntervalsOnTimeline);
             body->setActiveWms(name);
@@ -193,13 +193,13 @@ void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
 void Plugin::deInit() {
   spdlog::info("Unloading plugin...");
 
-  for (auto const& simpleBody : mSimpleBodies) {
-    mSolarSystem->unregisterBody(simpleBody);
-    mInputManager->unregisterSelectable(simpleBody);
+  for (auto const& simpleWMSBody : mSimpleWMSBodies) {
+    mSolarSystem->unregisterBody(simpleWMSBody);
+    mInputManager->unregisterSelectable(simpleWMSBody);
   }
 
-  for (auto const& simpleBodyNode : mSimpleBodyNodes) {
-    mSceneGraph->GetRoot()->DisconnectChild(simpleBodyNode);
+  for (auto const& simpleWMSBodyNode : mSimpleWMSBodyNodes) {
+    mSceneGraph->GetRoot()->DisconnectChild(simpleWMSBodyNode);
   }
 
   mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
