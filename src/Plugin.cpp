@@ -144,7 +144,7 @@ void Plugin::init() {
       });
 
   mGuiManager->getGui()->registerCallback("wms.setTilesImg",
-        "Set the current planet's wms channel to the TileSource with the given name.",        // TODO: correct
+        "Set the current planet's wms channel to the TileSource with the given name.",
          std::function([this](std::string&& name) {
           auto body = std::dynamic_pointer_cast<SimpleBody>(mSolarSystem->pActiveBody.get());
           if (body) {
