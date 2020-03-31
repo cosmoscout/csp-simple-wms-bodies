@@ -1,6 +1,15 @@
-#include "utils.h"
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                               This file is part of CosmoScout VR                               //
+//      and may be used under the terms of the MIT license. See the LICENSE file for details.     //
+//                        Copyright: (c) 2019 German Aerospace Center (DLR)                       //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace csp::simpleWmsBodies {
+#include "utils.hpp"
+
+#include "../../../src/cs-utils/logger.hpp"
+#include "../../../src/cs-utils/utils.hpp"
+
+namespace csp::simpleWmsBodies::utils {
 
 std::string timeToString(std::string format, boost::posix_time::ptime time) {
     std::stringstream sstr;
@@ -16,7 +25,7 @@ void matchDuration(const std::string &input, const std::regex& re, int &duration
     std::smatch match;
     std::regex_search(input, match, re);
     if (match.empty()) {
-        std::cout << "Pattern do NOT match" << std::endl;
+        spdlog::debug("Pattern does not match!");
         return;
     }
 
@@ -39,7 +48,7 @@ void matchDuration(const std::string &input, const std::regex& re, int &duration
                    1          * vec[5];   // seconds
 
     if (duration == 0) {
-        std::cout << "Not valid input" << std::endl;
+        spdlog::debug("Input is not valid!");
         return;
     }
 }
@@ -75,7 +84,7 @@ void convertIsoDate(std::string date, boost::posix_time::ptime &time) {
         time = boost::posix_time::microsec_clock::universal_time();
         return;
     }
-    date.erase(std::remove_if(date.begin(), date.end(), std::ptr_fun(::ispunct)), date.end());
+    date.erase(std::remove_if(date.begin(), date.end(), [](unsigned char x){return std::ispunct(x);}), date.end());
     std::string dateSubStr = date.substr(0, date.find("T"));
     std::size_t pos = date.find("T");
     std::string timeSubStr = "T";
@@ -117,9 +126,11 @@ void parseIsoString(std::string isoString, std::vector<timeInterval> &timeInterv
     }
 }
 
-bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format) {
+bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, 
+        boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format) {
     for(int i=0; i < timeIntervals.size(); i++) {
-        boost::posix_time::time_duration td = boost::posix_time::seconds(timeIntervals.at(i).mIntervalDuration);
+        boost::posix_time::time_duration td = 
+                boost::posix_time::seconds(timeIntervals.at(i).mIntervalDuration);
         if(timeIntervals.at(i).startTime <= time && timeIntervals.at(i).endTime + td >= time) {
             timeSinceStart = time - timeIntervals.at(i).startTime;
             intervalDuration = timeIntervals.at(i).mIntervalDuration;
@@ -131,4 +142,4 @@ bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &t
 }
 
 
-}// namespace csp::simpleWmsBodies
+}// namespace csp::simpleWmsBodies::utils

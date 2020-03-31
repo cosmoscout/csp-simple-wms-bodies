@@ -1,8 +1,6 @@
-# Simple bodies for CosmoScout VR
+# Simple WMS bodies for CosmoScout VR
 
-A CosmoSout VR plugin which renders simple spherical celestial bodies. The bodies are drawn as an ellipsoid with an equirectangular texture. This plugin is built as part of CosmoScout's build process. See the [main repository](https://github.com/cosmoscout/cosmoscout-vr) for instructions.
-
-This is a default plugin of CosmoScout VR. Hence, any **issues should be reported to the [main issue tracker](https://github.com/cosmoscout/cosmoscout-vr/issues)**. There you can add a label indicating which plugins are affected.
+A CosmoSout VR plugin which renders simple spherical celestial bodies with WMS based textures. The bodies are drawn as an ellipsoid with an equirectangular texture.
 
 ## Configuration
 
@@ -13,10 +11,23 @@ This plugin can be enabled with the following configuration in your `settings.js
   ...
   "plugins": {
     ...
-    "csp-simple-bodies": {
+    "csp-simple-wms-bodies": {
       "bodies": {
         <anchor name>: {
-          "texture": <path to surface texture>
+          "texture": <string>,        // The path to surface texture.
+          "wms": [
+            {
+              "name": <string>,       // The name of the data set as shown in the UI.
+              "copyright": <string>,  // The copyright holder of the data set (also shown in the UI).
+              "url": <string>,        // The URL of the mapserver including the "SERVICE=wms" parameter.
+              "width": <int>,         // The width of the WMS image.
+              "height": <int>,        // The height of the WMS image.
+              "time": <string>,       // Time intervals of WMS images.
+              "layers": <string>,     // A comma,seperated list of WMS layers.
+              "preFetch": <int>       // The amount of textures that gets prefetched in every direction.
+            },
+            ... <more WMS datasets> ...
+          ]
         },
         ... <more bodies> ...
       }
