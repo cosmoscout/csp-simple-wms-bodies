@@ -5,7 +5,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "WebMapTextureLoader.hpp"
+
+#include "utils.hpp"
+
+#include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/logger.hpp"
+
+#include <curlpp/Infos.hpp>
+#include <curlpp/Options.hpp>
+#include <stb_image.h>
+#include <stb_image_write.h>
 
 namespace csp::simpleWmsBodies {
 
@@ -23,7 +32,8 @@ bool fileExist(const char *fileName)
     return infile.good();
 }
 
-std::string WebMapTextureLoader::loadTexture(std::string time, std::string requestStr, std::string name, std::string format) {
+std::string WebMapTextureLoader::loadTexture(std::string time, std::string requestStr, 
+        std::string name, std::string format) {
     std::string cacheDir = "../share/resources/textures/" + name + "/";
     std::string year;
     std::stringstream time_stringstream(time);
@@ -73,7 +83,8 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
     return cacheFile;
 }
 
-std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time, std::string requestStr, std::string centerName, std::string format){
+std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time, 
+        std::string requestStr, std::string centerName, std::string format){
     return mThreadPool.enqueue([=]() {
       return loadTexture(time, requestStr, centerName, format);
     });

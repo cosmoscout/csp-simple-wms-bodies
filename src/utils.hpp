@@ -7,11 +7,10 @@
 #ifndef CSP_WMS_UTILS_HPP
 #define CSP_WMS_UTILS_HPP
 
-#include <regex>
-#include <optional>
-
-#include "../../../src/cs-utils/utils.hpp"
 #include "../../../src/cs-utils/convert.hpp"
+
+#include <optional>
+#include <regex>
 
 namespace csp::simpleWmsBodies {
 
@@ -36,9 +35,12 @@ struct Wms {
 namespace utils {
 
 std::string timeToString(std::string format, boost::posix_time::ptime time);
+void matchDuration(const std::string &input, const std::regex& re, int &duration);
 void timeDuration(std::string isoString, int &duration, std::string &format);
+void convertIsoDate(std::string date, boost::posix_time::ptime &time);
 void parseIsoString(std::string isoString, std::vector<timeInterval> &timeIntervals);
-bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format);
+bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, 
+    boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format);
 
 } // namespace utils
 

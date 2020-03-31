@@ -7,8 +7,9 @@
 #ifndef CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 #define CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 
-#include "../../../src/cs-core/PluginBase.hpp"
 #include "SimpleBody.hpp"
+
+#include "../../../src/cs-core/PluginBase.hpp"
 
 #include <VistaKernel/GraphicsManager/VistaOpenGLNode.h>
 
@@ -37,7 +38,7 @@ class Plugin : public cs::core::PluginBase {
   std::vector<std::shared_ptr<SimpleBody>> mSimpleBodies;
   std::vector<VistaOpenGLNode*>            mSimpleBodyNodes;
   std::shared_ptr<Properties>              mProperties;
-  std::vector<timeInterval> mIntervalsOnTimeline;
+  std::vector<timeInterval>                mIntervalsOnTimeline;
 
   int mActiveBodyConnection = -1;
 

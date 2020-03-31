@@ -7,20 +7,18 @@
 #ifndef CSP_WMS_SIMPLE_BODIES_HPP
 #define CSP_WMS_SIMPLE_BODIES_HPP
 
+#include "utils.hpp"
+#include "WebMapTextureLoader.hpp"
+
+#include "../../../src/cs-core/SolarSystem.hpp"
+#include "../../../src/cs-core/TimeControl.hpp"
+#include "../../../src/cs-scene/CelestialBody.hpp"
+
 #include <VistaKernel/GraphicsManager/VistaOpenGLDraw.h>
 #include <VistaOGLExt/VistaBufferObject.h>
 #include <VistaOGLExt/VistaGLSLShader.h>
 #include <VistaOGLExt/VistaTexture.h>
 #include <VistaOGLExt/VistaVertexArrayObject.h>
-
-#include "../../../src/cs-scene/CelestialBody.hpp"
-
-#include "../../../src/cs-core/SolarSystem.hpp"
-#include "../../../src/cs-graphics/TextureLoader.hpp"
-#include "../../../src/cs-utils/FrameTimings.hpp"
-#include "../../../src/cs-core/TimeControl.hpp"
-
-#include "WebMapTextureLoader.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -36,8 +34,11 @@ struct Properties {
 class SimpleBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
   SimpleBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
-      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, std::string sTexture,
-      std::string const& sFrameName, double tStartExistence, double tEndExistence, std::vector<Wms> tWms, std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties = nullptr);
+      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, 
+      std::string sTexture, std::string const& sFrameName, double tStartExistence, 
+      double tEndExistence, std::vector<Wms> tWms, 
+      std::shared_ptr<cs::core::TimeControl> timeControl, 
+      std::shared_ptr<Properties> properties = nullptr);
   ~SimpleBody() override;
 
   /// The sun object is used for lighting computation.

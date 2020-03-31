@@ -100,8 +100,9 @@ void Plugin::init() {
     double tStartExistence = existence.first;
     double tEndExistence   = existence.second;
 
-    auto body = std::make_shared<SimpleBody>(mGraphicsEngine, mSolarSystem, anchor->second.mCenter, bodySettings.second.mTexture,
-      anchor->second.mFrame, tStartExistence, tEndExistence, bodySettings.second.mWms, mTimeControl, mProperties);
+    auto body = std::make_shared<SimpleBody>(mGraphicsEngine, mSolarSystem, anchor->second.mCenter,
+      bodySettings.second.mTexture, anchor->second.mFrame, tStartExistence, tEndExistence,
+      bodySettings.second.mWms, mTimeControl, mProperties);
 
     mSolarSystem->registerBody(body);
     mInputManager->registerSelectable(body);
@@ -132,7 +133,8 @@ void Plugin::init() {
             "wms.setTilesImg", wms.mName, wms.mName, active);
           if(active) {
             // TODO: Copyright doesn't change
-            std::string javaCode = "$('#wms-img-data-copyright').tooltip({title: `© " + wms.mCopyright + "`, placement: 'top'})";
+            std::string javaCode = "$('#wms-img-data-copyright').tooltip({title: `© "
+              + wms.mCopyright + "`, placement: 'top'})";
             mGuiManager->getGui()->executeJavascript(javaCode);
 
             mIntervalsOnTimeline = simpleBody->getTimeIntervals();
@@ -180,7 +182,8 @@ void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid Time", "border-color: green", "", "", "");
+    mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid Time", "border-color: green", 
+      "", "", "");
   }
 }
 

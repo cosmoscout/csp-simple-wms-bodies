@@ -5,7 +5,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "utils.hpp"
+
 #include "../../../src/cs-utils/logger.hpp"
+#include "../../../src/cs-utils/utils.hpp"
 
 namespace csp::simpleWmsBodies::utils {
 
@@ -124,9 +126,11 @@ void parseIsoString(std::string isoString, std::vector<timeInterval> &timeInterv
     }
 }
 
-bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format) {
+bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval> &timeIntervals, 
+        boost::posix_time::time_duration &timeSinceStart, int &intervalDuration, std::string &format) {
     for(int i=0; i < timeIntervals.size(); i++) {
-        boost::posix_time::time_duration td = boost::posix_time::seconds(timeIntervals.at(i).mIntervalDuration);
+        boost::posix_time::time_duration td = 
+                boost::posix_time::seconds(timeIntervals.at(i).mIntervalDuration);
         if(timeIntervals.at(i).startTime <= time && timeIntervals.at(i).endTime + td >= time) {
             timeSinceStart = time - timeIntervals.at(i).startTime;
             intervalDuration = timeIntervals.at(i).mIntervalDuration;
