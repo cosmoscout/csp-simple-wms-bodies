@@ -77,6 +77,8 @@ void Plugin::init() {
       "WMS", "panorama", "../share/resources/gui/wms_body_tab.html");
   mGuiManager->addSettingsSectionToSideBarFromHTML(
       "WMS", "panorama", "../share/resources/gui/wms_settings.html");
+  mGuiManager->addScriptToGuiFromJS("../share/resources/gui/js/csp-simple-wms-bodies.js");
+
 
   // Set whether to interpolate textures between timesteps. 
   mGuiManager->getGui()->registerCallback("wms.setEnableInterpolation",
@@ -134,10 +136,8 @@ void Plugin::init() {
           mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
             "wms.setTilesImg", wms.mName, wms.mName, active);
           if(active) {
-            // TODO: Copyright doesn't change
-            std::string javaCode = "$('#wms-img-data-copyright').tooltip({title: `© "
-              + wms.mCopyright + "`, placement: 'top'})";
-            mGuiManager->getGui()->executeJavascript(javaCode);
+            mGuiManager->getGui()->callJavascript(
+                "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
 
             mIntervalsOnTimeline = simpleWMSBody->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline, wms.mName, simpleWMSBody->getCenterName());
@@ -152,6 +152,11 @@ void Plugin::init() {
           if (body) {
             removeTimeIntervall(mIntervalsOnTimeline);
             body->setActiveWms(name);
+            auto wms = body->getActiveWms();
+            
+            mGuiManager->getGui()->callJavascript(
+                "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
+
             mIntervalsOnTimeline = body->getTimeIntervals();
             addTimeIntervall(mIntervalsOnTimeline, name, body->getCenterName());
           }
