@@ -169,7 +169,7 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    // mGuiManager->getTimeline()->callJavascript("remove_item", id);       // TODO: fix
+    mGuiManager->removeEventFromTimenavigationBar(id);
   }
 }
 
@@ -183,7 +183,7 @@ void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid Time", "border-color: green", 
+    mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid WMS Time", "border-color: green", 
       "", "", "");
   }
 }
