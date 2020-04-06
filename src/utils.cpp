@@ -36,7 +36,7 @@ void matchDuration(const std::string &input, const std::regex& re, int &duration
         if (match[i].matched) {
             std::string str = match[i];
             str.pop_back(); // remove last character.
-            vec[i-1] = std::stod(str);
+            vec[i-1] = static_cast<int>(std::stod(str));
         }
     }
 
@@ -63,7 +63,6 @@ void timeDuration(std::string isoString, int &duration, std::string &format) {
         matchDuration(isoString, r, duration);
     }
     else {
-
         std::regex r("P([[:d:]]+Y)?([[:d:]]+M)?([[:d:]]+D)?T([[:d:]]+H)?([[:d:]]+M)?([[:d:]]+S|[[:d:]]+\\.[[:d:]]+S)?");
         matchDuration(isoString, r, duration);
     }

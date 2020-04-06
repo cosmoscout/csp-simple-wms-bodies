@@ -24,8 +24,8 @@ namespace csp::simpleWmsBodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const unsigned GRID_RESOLUTION_X = 200;
-const unsigned GRID_RESOLUTION_Y = 100;
+const uint32_t GRID_RESOLUTION_X = 200;
+const uint32_t GRID_RESOLUTION_Y = 100;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -154,18 +154,18 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
   std::vector<float>    vertices(GRID_RESOLUTION_X * GRID_RESOLUTION_Y * 2);
   std::vector<unsigned> indices((GRID_RESOLUTION_X - 1) * (2 + 2 * GRID_RESOLUTION_Y));
 
-  for (int x = 0; x < GRID_RESOLUTION_X; ++x) {
-    for (int y = 0; y < GRID_RESOLUTION_Y; ++y) {
+  for (uint32_t x = 0; x < GRID_RESOLUTION_X; ++x) {
+    for (uint32_t y = 0; y < GRID_RESOLUTION_Y; ++y) {
       vertices[(x * GRID_RESOLUTION_Y + y) * 2 + 0] = 1.f / (GRID_RESOLUTION_X - 1) * x;
       vertices[(x * GRID_RESOLUTION_Y + y) * 2 + 1] = 1.f / (GRID_RESOLUTION_Y - 1) * y;
     }
   }
 
-  int index = 0;
+  uint32_t index = 0;
 
-  for (int x = 0; x < GRID_RESOLUTION_X - 1; ++x) {
+  for (uint32_t x = 0; x < GRID_RESOLUTION_X - 1; ++x) {
     indices[index++] = x * GRID_RESOLUTION_Y;
-    for (int y = 0; y < GRID_RESOLUTION_Y; ++y) {
+    for (uint32_t y = 0; y < GRID_RESOLUTION_Y; ++y) {
       indices[index++] = x * GRID_RESOLUTION_Y + y;
       indices[index++] = (x + 1) * GRID_RESOLUTION_Y + y;
     }
@@ -367,8 +367,8 @@ bool SimpleWMSBody::Do() {
           mCurentOtherTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
           mOtherTextureUsed = true;
         }
-        mFade = (double)(intervalAfter - time).total_seconds() / 
-            (double)(intervalAfter - startTime).total_seconds();
+        mFade = static_cast<float>((double)(intervalAfter - time).total_seconds() / 
+            (double)(intervalAfter - startTime).total_seconds());
       }
     }
   }
@@ -404,8 +404,9 @@ bool SimpleWMSBody::Do() {
     // If the SimpleWMSBody is actually the sun, we have to calculate the lighting differently.
     if (mGraphicsEngine->pEnableHDR.get()) {
       double sceneScale = 1.0 / mSolarSystem->getObserver().getAnchorScale();
-      sunIlluminance    = mSolarSystem->pSunLuminousPower.get() /
-                       (sceneScale * sceneScale * mRadii[0] * mRadii[0] * 4.0 * glm::pi<double>());
+      sunIlluminance    = static_cast<float>(
+          mSolarSystem->pSunLuminousPower.get() /
+          (sceneScale * sceneScale * mRadii[0] * mRadii[0] * 4.0 * glm::pi<double>()));
     }
 
     ambientBrightness = 1.0f;
@@ -413,7 +414,7 @@ bool SimpleWMSBody::Do() {
   } else if (mSun) {
     // For all other bodies we can use the utility methods from the SolarSystem.
     if (mGraphicsEngine->pEnableHDR.get()) {
-      sunIlluminance = mSolarSystem->getSunIlluminance(getWorldTransform()[3]);
+      sunIlluminance = static_cast<float>(mSolarSystem->getSunIlluminance(getWorldTransform()[3]));
     }
 
     sunDirection = mSolarSystem->getSunDirection(getWorldTransform()[3]);
