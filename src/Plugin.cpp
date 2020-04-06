@@ -120,12 +120,13 @@ void Plugin::init() {
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
         auto simpleWMSBody = std::dynamic_pointer_cast<SimpleWMSBody>(body);
 
+        // Remove time intervalls of the old body.
+        removeTimeIntervall(mIntervalsOnTimeline);
+
         if (!simpleWMSBody) {
           return;
         }
-
-        // Remove time intervalls of the old body.
-        removeTimeIntervall(mIntervalsOnTimeline);
+        
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.gui.clearDropdown", "wms.setTilesImg");
         for (auto const& wms : simpleWMSBody->getWms()) {
@@ -139,7 +140,7 @@ void Plugin::init() {
             mGuiManager->getGui()->executeJavascript(javaCode);
 
             mIntervalsOnTimeline = simpleWMSBody->getTimeIntervals();
-            addTimeIntervall(mIntervalsOnTimeline);
+            addTimeIntervall(mIntervalsOnTimeline, wms.mName, simpleWMSBody->getCenterName());
           }
         }
       });
@@ -152,7 +153,7 @@ void Plugin::init() {
             removeTimeIntervall(mIntervalsOnTimeline);
             body->setActiveWms(name);
             mIntervalsOnTimeline = body->getTimeIntervals();
-            addTimeIntervall(mIntervalsOnTimeline);
+            addTimeIntervall(mIntervalsOnTimeline, name, body->getCenterName());
           }
         }));
 
@@ -175,7 +176,8 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
+void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals, std::string wmsName, 
+    std::string planetName) {
   for(int i=0; i < timeIntervals.size(); i++) {
     std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
     std::string end = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
@@ -184,7 +186,7 @@ void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals) {
     }
     std::string id = "wms" + start + end;
     mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid WMS Time", "border-color: green", 
-      "", "", "");
+      wmsName, planetName, "");
   }
 }
 

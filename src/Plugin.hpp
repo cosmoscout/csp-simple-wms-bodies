@@ -47,7 +47,8 @@ class Plugin : public cs::core::PluginBase {
   int mActiveBodyConnection = -1;
 
   /// Add the time intervalls of the current data set to timeline.
-  void addTimeIntervall(std::vector<timeInterval> timeIntervals);
+  void addTimeIntervall(std::vector<timeInterval> timeIntervals, std::string wmsName, 
+      std::string planetName);
 
   /// Remove the time intervalls of the current data set to timeline.
   void removeTimeIntervall(std::vector<timeInterval> timeIntervals);
