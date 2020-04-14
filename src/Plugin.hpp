@@ -16,7 +16,7 @@
 namespace csp::simpleWmsBodies {
 
 /// This plugin provides the rendering of planets as spheres with a texture and an additional WMS
-/// based texture. Despite its name it can also render moons :P. It can be configured via the 
+/// based texture. Despite its name it can also render moons :P. It can be configured via the
 /// applications config file. See README.md for details.
 class Plugin : public cs::core::PluginBase {
  public:
@@ -25,8 +25,8 @@ class Plugin : public cs::core::PluginBase {
 
     /// The startup settings for a planet.
     struct Body {
-      std::vector<Wms> mWms;  ///< The path to surface texture.
-      std::string mTexture;   ///< The data sets containing WMS data.
+      std::vector<Wms> mWms;     ///< The path to surface texture.
+      std::string      mTexture; ///< The data sets containing WMS data.
     };
 
     std::map<std::string, Body> mBodies;
@@ -47,8 +47,8 @@ class Plugin : public cs::core::PluginBase {
   int mActiveBodyConnection = -1;
 
   /// Add the time intervalls of the current data set to timeline.
-  void addTimeIntervall(std::vector<timeInterval> timeIntervals, std::string wmsName, 
-      std::string planetName);
+  void addTimeIntervall(
+      std::vector<timeInterval> timeIntervals, std::string wmsName, std::string planetName);
 
   /// Remove the time intervalls of the current data set to timeline.
   void removeTimeIntervall(std::vector<timeInterval> timeIntervals);

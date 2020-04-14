@@ -7,8 +7,8 @@
 #ifndef CSP_WMS_SIMPLE_BODIES_HPP
 #define CSP_WMS_SIMPLE_BODIES_HPP
 
-#include "utils.hpp"
 #include "WebMapTextureLoader.hpp"
+#include "utils.hpp"
 
 #include "../../../src/cs-core/SolarSystem.hpp"
 #include "../../../src/cs-core/TimeControl.hpp"
@@ -26,7 +26,7 @@ namespace csp::simpleWmsBodies {
 
 struct Properties {
   cs::utils::Property<bool> mEnableInterpolation = true;
-  cs::utils::Property<bool> mEnableTimespan = false;
+  cs::utils::Property<bool> mEnableTimespan      = false;
 };
 
 /// This is just a sphere with a texture, attached to the given SPICE frame. The texture should be
@@ -34,11 +34,11 @@ struct Properties {
 class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
   SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
-      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, 
-      std::string sTexture, std::string const& sFrameName, double tStartExistence, 
-      double tEndExistence, std::vector<Wms> tWms, 
-      std::shared_ptr<cs::core::TimeControl> timeControl, 
-      std::shared_ptr<Properties> properties = nullptr);
+      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
+      std::string sTexture, std::string const& sFrameName, double tStartExistence,
+      double tEndExistence, std::vector<Wms> tWms,
+      std::shared_ptr<cs::core::TimeControl> timeControl,
+      std::shared_ptr<Properties>            properties = nullptr);
   ~SimpleWMSBody() override;
 
   /// The sun object is used for lighting computation.
@@ -58,7 +58,7 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool GetBoundingBox(VistaBoundingBox& bb) override;
 
   std::vector<Wms> getWms();
-  Wms getActiveWms();
+  Wms              getActiveWms();
 
   void setActiveWms(Wms wms);
   void setActiveWms(std::string wms);
@@ -70,25 +70,25 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::shared_ptr<cs::core::SolarSystem>    mSolarSystem;
 
   std::vector<Wms> mWms;
-  Wms mActiveWms;
-  std::mutex mWmsMutex;
-  bool wmsInitialized = false;
+  Wms              mActiveWms;
+  std::mutex       mWmsMutex;
+  bool             wmsInitialized = false;
 
   std::shared_ptr<VistaTexture> mTexture;
   std::shared_ptr<VistaTexture> mWmsTexture;
   std::shared_ptr<VistaTexture> mOtherTexture;
   std::shared_ptr<VistaTexture> mDefaultTexture;
-  std::string mDefaultTextureFile;
-  int mDefTextWidth;
-  int mDefTextHeight;
-  std::string mRequest;
-  std::string mFormat;
-  int mIntervalDuration;
-  int mTextureWidth;
-  int mTextureHeight;
-  int mPreFetch;      ///Amount of textures that gets prefetched in every direction.
-  std::vector<timeInterval> mTimeIntervals;
-  bool mDefaultTextureUsed;
+  std::string                   mDefaultTextureFile;
+  int                           mDefTextWidth;
+  int                           mDefTextHeight;
+  std::string                   mRequest;
+  std::string                   mFormat;
+  int                           mIntervalDuration;
+  int                           mTextureWidth;
+  int                           mTextureHeight;
+  int                           mPreFetch; /// Amount of textures that gets prefetched in every direction.
+  std::vector<timeInterval>     mTimeIntervals;
+  bool                          mDefaultTextureUsed;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;
@@ -109,16 +109,16 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   static const std::string SPHERE_VERT;
   static const std::string SPHERE_FRAG;
 
-  std::map<std::string, std::future<std::string> >     mTextureFilesBuffer;
-  std::map<std::string, std::future<unsigned char *> > mTexturesBuffer;
+  std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
+  std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;
 
-  std::map<std::string, unsigned char *> mTextures;
-  std::string mCurentTexture;
-  std::string mCurentOtherTexture;
-  bool mOtherTextureBefore;
-  bool mOtherTextureUsed = false;
-  float mFade;
-  std::shared_ptr<Properties> mProperties;
+  std::map<std::string, unsigned char*> mTextures;
+  std::string                           mCurentTexture;
+  std::string                           mCurentOtherTexture;
+  bool                                  mOtherTextureBefore;
+  bool                                  mOtherTextureUsed = false;
+  float                                 mFade;
+  std::shared_ptr<Properties>           mProperties;
 
   boost::posix_time::ptime getStartTime(boost::posix_time::ptime time);
 };

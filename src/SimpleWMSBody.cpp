@@ -8,8 +8,8 @@
 
 #include "../../../src/cs-core/GraphicsEngine.hpp"
 #include "../../../src/cs-graphics/TextureLoader.hpp"
-#include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/FrameTimings.hpp"
+#include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/utils.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -129,10 +129,10 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
-      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName, 
-      std::string sTexture, std::string const& sFrameName, double tStartExistence, 
-      double tEndExistence, std::vector<Wms> tWms, 
-      std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties)
+    std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
+    std::string sTexture, std::string const& sFrameName, double tStartExistence,
+    double tEndExistence, std::vector<Wms> tWms, std::shared_ptr<cs::core::TimeControl> timeControl,
+    std::shared_ptr<Properties> properties)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
     , mGraphicsEngine(graphicsEngine)
     , mSolarSystem(solarSystem)
@@ -141,10 +141,10 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
     // , mDefaultTexture(new VistaTexture(GL_TEXTURE_2D))
     , mDefaultTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
     , mOtherTexture(new VistaTexture(GL_TEXTURE_2D)) {
-  pVisibleRadius = mRadii[0];
-  mTimeControl = timeControl;
-  mProperties = properties;
-  mWms = tWms;
+  pVisibleRadius      = mRadii[0];
+  mTimeControl        = timeControl;
+  mProperties         = properties;
+  mWms                = tWms;
   mDefaultTextureFile = sTexture;
 
   setActiveWms(mWms.at(0));
@@ -197,7 +197,7 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleWMSBody::~SimpleWMSBody() {
-  for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
+  for (auto it = mTextures.begin(); it != mTextures.end(); ++it) {
     stbi_image_free(it->second);
   }
 
@@ -263,112 +263,109 @@ bool SimpleWMSBody::Do() {
 
   cs::utils::FrameTimings::ScopedTimer timer("Simple Wms Planets");
 
-  if(mActiveWms.mTime.has_value()) {
-    boost::posix_time::ptime time = 
+  if (mActiveWms.mTime.has_value()) {
+    boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
-    for(int i=-mPreFetch; i<=mPreFetch;i++) {
+    for (int i = -mPreFetch; i <= mPreFetch; i++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
       time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get()) + td * i;
       boost::posix_time::time_duration timeSinceStart;
-      boost::posix_time::ptime startTime = 
+      boost::posix_time::ptime         startTime =
           time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
-      bool inInterval = utils::timeInIntervals(startTime, mTimeIntervals, timeSinceStart, 
-          mIntervalDuration, mFormat);
-      if(mIntervalDuration != 0) {
-        startTime -=  
-            boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
+      bool inInterval = utils::timeInIntervals(
+          startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+      if (mIntervalDuration != 0) {
+        startTime -= boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
       }
       std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
-      if(mProperties->mEnableTimespan.get()) {
-        boost::posix_time::time_duration timeDuration =  
+      if (mProperties->mEnableTimespan.get()) {
+        boost::posix_time::time_duration timeDuration =
             boost::posix_time::seconds(mIntervalDuration);
         boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
         timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
       }
       auto iteratorText1 = mTextureFilesBuffer.find(timeString);
-      auto iteratorText2= mTexturesBuffer.find(timeString);
+      auto iteratorText2 = mTexturesBuffer.find(timeString);
       auto iteratorText3 = mTextures.find(timeString);
-      if(iteratorText1 == mTextureFilesBuffer.end() && iteratorText2 == mTexturesBuffer.end() 
-          && iteratorText3 == mTextures.end() && inInterval) {
-        mTextureFilesBuffer.insert( std::pair<std::string, std::future<std::string> >(
-          timeString, mTextureLoader.loadTextureAsync(timeString,mRequest, mActiveWms.mLayers, mFormat)) 
-        );
+      if (iteratorText1 == mTextureFilesBuffer.end() && iteratorText2 == mTexturesBuffer.end() &&
+          iteratorText3 == mTextures.end() && inInterval) {
+        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
+            mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWms.mLayers, mFormat)));
       }
     }
 
     bool fileError = false;
 
     // Load Wms textures to buffer.
-    for(auto it=mTextureFilesBuffer.begin(); it!=mTextureFilesBuffer.end(); ++it) {
-      if(it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+    for (auto it = mTextureFilesBuffer.begin(); it != mTextureFilesBuffer.end(); ++it) {
+      if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         std::string fileName = it->second.get();
-        if(fileName != "Error") {
-          mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char *> > (
-            it->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
+        if (fileName != "Error") {
+          mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
+              it->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
         } else {
           fileError = true;
-          mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char *> > (
-            it->first, mTextureLoader.loadTextureFromFileAsync(mDefaultTextureFile)));
+          mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
+              it->first, mTextureLoader.loadTextureFromFileAsync(mDefaultTextureFile)));
         }
         mTextureFilesBuffer.erase(it);
       }
     }
 
     // Add loaded textures to map.
-    for(auto it=mTexturesBuffer.begin(); it!=mTexturesBuffer.end(); ++it) {
-      if(it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        mTextures.insert(std::pair<std::string, unsigned char *>(
-          it->first, it->second.get()));
+    for (auto it = mTexturesBuffer.begin(); it != mTexturesBuffer.end(); ++it) {
+      if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        mTextures.insert(std::pair<std::string, unsigned char*>(it->first, it->second.get()));
         mTexturesBuffer.erase(it);
       }
     }
 
     time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
     boost::posix_time::time_duration timeSinceStart;
-    boost::posix_time::ptime startTime = 
+    boost::posix_time::ptime         startTime =
         time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
-    bool inInterval = utils::timeInIntervals(startTime, mTimeIntervals, timeSinceStart, 
-        mIntervalDuration, mFormat);
-    if(mIntervalDuration != 0) {
-      startTime -=  boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
+    bool inInterval = utils::timeInIntervals(
+        startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+    if (mIntervalDuration != 0) {
+      startTime -= boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
     }
     boost::posix_time::time_duration timeDuration = boost::posix_time::seconds(mIntervalDuration);
-    std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
-      if(mProperties->mEnableTimespan.get()) {
-        boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
-        timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
+    std::string                      timeString   = utils::timeToString(mFormat.c_str(), startTime);
+    if (mProperties->mEnableTimespan.get()) {
+      boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
+      timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
     }
     auto iterator = mTextures.find(timeString);
 
     // Use Wms texture inside the interval.
-    if(inInterval && !fileError) {
-      if(mCurentTexture != timeString && iterator != mTextures.end()) {
+    if (inInterval && !fileError) {
+      if (mCurentTexture != timeString && iterator != mTextures.end()) {
         mDefaultTextureUsed = false;
-        mWmsTexture->UploadTexture(mTextureWidth, mTextureHeight ,iterator->second, false);
-        mTexture = mWmsTexture;
+        mWmsTexture->UploadTexture(mTextureWidth, mTextureHeight, iterator->second, false);
+        mTexture       = mWmsTexture;
         mCurentTexture = timeString;
       }
-    // Use default planet texture.
-    }else {
+      // Use default planet texture.
+    } else {
       mDefaultTextureUsed = true;
-      mTexture = mDefaultTexture;
-      mCurentTexture = utils::timeToString(mFormat.c_str(), startTime);
+      mTexture            = mDefaultTexture;
+      mCurentTexture      = utils::timeToString(mFormat.c_str(), startTime);
     }
 
-    if(mDefaultTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
-       mOtherTextureUsed = false;
-    // Create fading between Wms textures.
+    if (mDefaultTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
+      mOtherTextureUsed = false;
+      // Create fading between Wms textures.
     } else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
-      if(it != mTextures.end()) {
-        if(mCurentOtherTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
-          mOtherTexture->UploadTexture(mTextureWidth, mTextureHeight ,it->second, false);
+      if (it != mTextures.end()) {
+        if (mCurentOtherTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
+          mOtherTexture->UploadTexture(mTextureWidth, mTextureHeight, it->second, false);
           mCurentOtherTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
-          mOtherTextureUsed = true;
+          mOtherTextureUsed   = true;
         }
-        mFade = static_cast<float>((double)(intervalAfter - time).total_seconds() / 
-            (double)(intervalAfter - startTime).total_seconds());
+        mFade = static_cast<float>((double)(intervalAfter - time).total_seconds() /
+                                   (double)(intervalAfter - startTime).total_seconds());
       }
     }
   }
@@ -392,7 +389,7 @@ bool SimpleWMSBody::Do() {
     mShader.Link();
 
     mShaderDirty = false;
-  }  
+  }
 
   mShader.Bind();
 
@@ -426,7 +423,7 @@ bool SimpleWMSBody::Do() {
   mShader.SetUniform(mShader.GetUniformLocation("uSunIlluminance"), sunIlluminance);
   mShader.SetUniform(mShader.GetUniformLocation("uAmbientBrightness"), ambientBrightness);
   mShader.SetUniform(mShader.GetUniformLocation("uSecondTexture"), mOtherTextureUsed);
-  
+
   // Get modelview and projection matrices.
   GLfloat glMatMV[16], glMatP[16];
   glGetFloatv(GL_MODELVIEW_MATRIX, &glMatMV[0]);
@@ -444,7 +441,7 @@ bool SimpleWMSBody::Do() {
   mShader.SetUniform(
       mShader.GetUniformLocation("uFarClip"), cs::utils::getCurrentFarClipDistance());
 
-  if(mOtherTextureUsed) {
+  if (mOtherTextureUsed) {
     mShader.SetUniform(mShader.GetUniformLocation("uFade"), mFade);
     mOtherTexture->Bind(GL_TEXTURE2);
   }
@@ -460,7 +457,7 @@ bool SimpleWMSBody::Do() {
   // Clean up.
   mTexture->Unbind(GL_TEXTURE0);
   mDefaultTexture->Unbind(GL_TEXTURE1);
-  if(mOtherTextureUsed) {
+  if (mOtherTextureUsed) {
     mOtherTexture->Unbind(GL_TEXTURE2);
   }
 
@@ -479,19 +476,19 @@ bool SimpleWMSBody::GetBoundingBox(VistaBoundingBox& bb) {
 
 boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime time) {
   boost::posix_time::time_duration timeSinceStart;
-  bool inInterval = 
+  bool                             inInterval =
       utils::timeInIntervals(time, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
-  boost::posix_time::ptime startTime = 
+  boost::posix_time::ptime startTime =
       time - boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
   return startTime;
 }
- 
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SimpleWMSBody::setActiveWms(Wms wms) {
-  if(wmsInitialized) {
+  if (wmsInitialized) {
     std::lock_guard<std::mutex> guard(mWmsMutex);
-    for(auto it=mTextures.begin(); it!=mTextures.end(); ++it) {
+    for (auto it = mTextures.begin(); it != mTextures.end(); ++it) {
       stbi_image_free(it->second);
     }
   }
@@ -501,26 +498,26 @@ void SimpleWMSBody::setActiveWms(Wms wms) {
   mTexturesBuffer.clear();
   mActiveWms = wms;
   std::stringstream url;
-  url << mActiveWms.mUrl << "&WIDTH=" << mActiveWms.mWidth << "&HEIGHT=" 
-      << mActiveWms.mHeight << "&LAYERS=" << mActiveWms.mLayers;
-  mRequest = url.str();
+  url << mActiveWms.mUrl << "&WIDTH=" << mActiveWms.mWidth << "&HEIGHT=" << mActiveWms.mHeight
+      << "&LAYERS=" << mActiveWms.mLayers;
+  mRequest               = url.str();
   std::string requestStr = mRequest;
-  mTextureWidth = mActiveWms.mWidth;
-  mTextureHeight = mActiveWms.mHeight;
+  mTextureWidth          = mActiveWms.mWidth;
+  mTextureHeight         = mActiveWms.mHeight;
 
   mPreFetch = mActiveWms.preFetch.value_or(0);
 
-  if(mActiveWms.mTime.has_value()) {
+  if (mActiveWms.mTime.has_value()) {
     mTimeIntervals.clear();
     utils::parseIsoString(mActiveWms.mTime.value(), mTimeIntervals);
-    mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
-    mFormat = mTimeIntervals.at(0).mFormat;
-    mTexture = mDefaultTexture;
+    mIntervalDuration   = mTimeIntervals.at(0).mIntervalDuration;
+    mFormat             = mTimeIntervals.at(0).mFormat;
+    mTexture            = mDefaultTexture;
     mDefaultTextureUsed = true;
-    mCurentTexture = "";
+    mCurentTexture      = "";
   } else {
     std::ofstream out;
-    std::string cacheFile = "../share/resources/textures/" + mActiveWms.mLayers + ".png";
+    std::string   cacheFile = "../share/resources/textures/" + mActiveWms.mLayers + ".png";
     out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
 
     if (!out) {
@@ -531,9 +528,9 @@ void SimpleWMSBody::setActiveWms(Wms wms) {
     request.setOpt(curlpp::options::WriteStream(&out));
     request.setOpt(curlpp::options::NoSignal(true));
     try {
-        request.perform();
+      request.perform();
     } catch (std::exception& e) {
-        spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
+      spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
     }
     out.close();
 
@@ -542,8 +539,8 @@ void SimpleWMSBody::setActiveWms(Wms wms) {
 }
 
 void SimpleWMSBody::setActiveWms(std::string wms) {
-  for(int i=0; i < mWms.size();i++) {
-    if(wms == mWms.at(i).mName) {
+  for (int i = 0; i < mWms.size(); i++) {
+    if (wms == mWms.at(i).mName) {
       setActiveWms(mWms.at(i));
     }
   }

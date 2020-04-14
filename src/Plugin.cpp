@@ -6,10 +6,10 @@
 
 #include "Plugin.hpp"
 
-#include "../../../src/cs-core/InputManager.hpp"
 #include "../../../src/cs-core/GuiManager.hpp"
-#include "../../../src/cs-utils/utils.hpp"
+#include "../../../src/cs-core/InputManager.hpp"
 #include "../../../src/cs-utils/logger.hpp"
+#include "../../../src/cs-utils/utils.hpp"
 
 #include <VistaKernel/GraphicsManager/VistaSceneGraph.h>
 #include <VistaKernel/GraphicsManager/VistaTransformNode.h>
@@ -34,20 +34,20 @@ namespace csp::simpleWmsBodies {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Wms& o) {
-  o.mName = cs::core::parseProperty<std::string>("name", j);
+  o.mName      = cs::core::parseProperty<std::string>("name", j);
   o.mCopyright = cs::core::parseProperty<std::string>("copyright", j);
-  o.mUrl = cs::core::parseProperty<std::string>("url", j);
-  o.mWidth = cs::core::parseProperty<int>("width", j);
-  o.mHeight = cs::core::parseProperty<int>("height", j);
-  o.mTime = cs::core::parseOptional<std::string>("time", j);
-  o.preFetch = cs::core::parseOptional<int>("preFetch", j);
-  o.mLayers = cs::core::parseProperty<std::string>("layers", j);
+  o.mUrl       = cs::core::parseProperty<std::string>("url", j);
+  o.mWidth     = cs::core::parseProperty<int>("width", j);
+  o.mHeight    = cs::core::parseProperty<int>("height", j);
+  o.mTime      = cs::core::parseOptional<std::string>("time", j);
+  o.preFetch   = cs::core::parseOptional<int>("preFetch", j);
+  o.mLayers    = cs::core::parseProperty<std::string>("layers", j);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
-  o.mWms = cs::core::parseVector<Wms>("wms", j);
+  o.mWms     = cs::core::parseVector<Wms>("wms", j);
   o.mTexture = cs::core::parseProperty<std::string>("texture", j);
 }
 
@@ -60,7 +60,7 @@ void from_json(const nlohmann::json& j, Plugin::Settings& o) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Plugin::Plugin() 
+Plugin::Plugin()
     : mProperties(std::make_shared<Properties>()) {
   // Create default logger for this plugin.
   spdlog::set_default_logger(cs::utils::logger::createLogger("csp-simple-wms-bodies"));
@@ -79,20 +79,18 @@ void Plugin::init() {
       "WMS", "panorama", "../share/resources/gui/wms_settings.html");
   mGuiManager->addScriptToGuiFromJS("../share/resources/gui/js/csp-simple-wms-bodies.js");
 
-
-  // Set whether to interpolate textures between timesteps. 
+  // Set whether to interpolate textures between timesteps.
   mGuiManager->getGui()->registerCallback("wms.setEnableInterpolation",
       "Enables or disables interpolation.",
       std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
 
   // Set whether to display the entire timespan.
-  mGuiManager->getGui()->registerCallback("wms.setEnableTimeSpan",
-      "Enables or disables timespan.",
+  mGuiManager->getGui()->registerCallback("wms.setEnableTimeSpan", "Enables or disables timespan.",
       std::function([this](bool enable) { mProperties->mEnableTimespan = enable; }));
 
   for (auto const& bodySettings : mPluginSettings.mBodies) {
     auto anchor = mAllSettings->mAnchors.find(bodySettings.first);
-    
+
     if (anchor == mAllSettings->mAnchors.end()) {
       throw std::runtime_error(
           "There is no Anchor \"" + bodySettings.first + "\" defined in the settings.");
@@ -102,9 +100,9 @@ void Plugin::init() {
     double tStartExistence = existence.first;
     double tEndExistence   = existence.second;
 
-    auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem, anchor->second.mCenter,
-      bodySettings.second.mTexture, anchor->second.mFrame, tStartExistence, tEndExistence,
-      bodySettings.second.mWms, mTimeControl, mProperties);
+    auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem,
+        anchor->second.mCenter, bodySettings.second.mTexture, anchor->second.mFrame,
+        tStartExistence, tEndExistence, bodySettings.second.mWms, mTimeControl, mProperties);
 
     mSolarSystem->registerBody(body);
     mInputManager->registerSelectable(body);
@@ -128,14 +126,13 @@ void Plugin::init() {
         if (!simpleWMSBody) {
           return;
         }
-        
-        mGuiManager->getGui()->callJavascript(
-            "CosmoScout.gui.clearDropdown", "wms.setTilesImg");
+
+        mGuiManager->getGui()->callJavascript("CosmoScout.gui.clearDropdown", "wms.setTilesImg");
         for (auto const& wms : simpleWMSBody->getWms()) {
           bool active = wms.mName == simpleWMSBody->getActiveWms().mName;
-          mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
-            "wms.setTilesImg", wms.mName, wms.mName, active);
-          if(active) {
+          mGuiManager->getGui()->callJavascript(
+              "CosmoScout.gui.addDropdownValue", "wms.setTilesImg", wms.mName, wms.mName, active);
+          if (active) {
             mGuiManager->getGui()->callJavascript(
                 "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
 
@@ -146,21 +143,21 @@ void Plugin::init() {
       });
 
   mGuiManager->getGui()->registerCallback("wms.setTilesImg",
-        "Set the current planet's wms channel to the TileSource with the given name.",
-         std::function([this](std::string&& name) {
-          auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
-          if (body) {
-            removeTimeIntervall(mIntervalsOnTimeline);
-            body->setActiveWms(name);
-            auto wms = body->getActiveWms();
-            
-            mGuiManager->getGui()->callJavascript(
-                "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
+      "Set the current planet's wms channel to the TileSource with the given name.",
+      std::function([this](std::string&& name) {
+        auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
+        if (body) {
+          removeTimeIntervall(mIntervalsOnTimeline);
+          body->setActiveWms(name);
+          auto wms = body->getActiveWms();
 
-            mIntervalsOnTimeline = body->getTimeIntervals();
-            addTimeIntervall(mIntervalsOnTimeline, name, body->getCenterName());
-          }
-        }));
+          mGuiManager->getGui()->callJavascript(
+              "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
+
+          mIntervalsOnTimeline = body->getTimeIntervals();
+          addTimeIntervall(mIntervalsOnTimeline, name, body->getCenterName());
+        }
+      }));
 
   spdlog::info("Loading done.");
 }
@@ -168,10 +165,10 @@ void Plugin::init() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
-  for(int i=0; i < timeIntervals.size(); i++) {
+  for (int i = 0; i < timeIntervals.size(); i++) {
     std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
-    std::string end = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
-    if(start == end) {
+    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
+    if (start == end) {
       end = "";
     }
     std::string id = "wms" + start + end;
@@ -181,17 +178,17 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::addTimeIntervall(std::vector<timeInterval> timeIntervals, std::string wmsName, 
-    std::string planetName) {
-  for(int i=0; i < timeIntervals.size(); i++) {
+void Plugin::addTimeIntervall(
+    std::vector<timeInterval> timeIntervals, std::string wmsName, std::string planetName) {
+  for (int i = 0; i < timeIntervals.size(); i++) {
     std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
-    std::string end = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
-    if(start == end) {
+    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
+    if (start == end) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->addEventToTimenavigationBar(start, end, id, "Valid WMS Time", "border-color: green", 
-      wmsName, planetName, "");
+    mGuiManager->addEventToTimenavigationBar(
+        start, end, id, "Valid WMS Time", "border-color: green", wmsName, planetName, "");
   }
 }
 
@@ -210,7 +207,7 @@ void Plugin::deInit() {
   }
 
   mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
-  
+
   mGuiManager->getGui()->unregisterCallback("wms.setEnableInterpolation");
   mGuiManager->getGui()->unregisterCallback("wms.setEnableTimeSpan");
   mGuiManager->getGui()->unregisterCallback("wms.setTilesImg");

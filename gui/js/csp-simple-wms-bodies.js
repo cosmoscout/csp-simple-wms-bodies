@@ -1,35 +1,34 @@
 /* global IApi, CosmoScout, $ */
 
 (() => {
+  /**
+   * Simple WMS bodies Api
+   */
+  class SimpleWMSBodiesApi extends IApi {
     /**
-     * Simple WMS bodies Api
+     * @inheritDoc
      */
-    class SimpleWMSBodiesApi extends IApi {
-      /**
-       * @inheritDoc
-       */
-      name = 'simpleWMSBodies';
-  
-      /**
-       * @inheritDoc
-       */
-      init() {
+    name = 'simpleWMSBodies';
 
-      }
-  
-      /**
-       * Sets an elevation data copyright tooltip
-       * TODO Remove jQuery
-       *
-       * @param copyright {string}
-       */
-      // eslint-disable-next-line class-methods-use-this
-      setWMSDataCopyright(copyright) {
-        $('#wms-img-data-copyright').tooltip({placement: 'top'}).attr('data-original-title', `© ${copyright}`);
-      }
+    /**
+     * @inheritDoc
+     */
+    init() {
     }
-  
 
-    CosmoScout.init(SimpleWMSBodiesApi);
-  })();
-  
+    /**
+     * Sets an elevation data copyright tooltip
+     * TODO Remove jQuery
+     *
+     * @param copyright {string}
+     */
+    // eslint-disable-next-line class-methods-use-this
+    setWMSDataCopyright(copyright) {
+      $('#wms-img-data-copyright')
+          .tooltip({placement: 'top'})
+          .attr('data-original-title', `© ${copyright}`);
+    }
+  }
+
+  CosmoScout.init(SimpleWMSBodiesApi);
+})();
