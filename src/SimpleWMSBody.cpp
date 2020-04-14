@@ -486,7 +486,7 @@ boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime ti
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleWMSBody::setActiveWMS(WMSConfig wms) {
+void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   if (mWMSInitialized) {
     std::lock_guard<std::mutex> guard(mWMSMutex);
     for (auto it = mTextures.begin(); it != mTextures.end(); ++it) {
@@ -541,7 +541,7 @@ void SimpleWMSBody::setActiveWMS(WMSConfig wms) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleWMSBody::setActiveWMS(std::string wms) {
+void SimpleWMSBody::setActiveWMS(std::string const& wms) {
   for (int i = 0; i < mWMSs.size(); i++) {
     if (wms == mWMSs.at(i).mName) {
       setActiveWMS(mWMSs.at(i));
@@ -551,13 +551,13 @@ void SimpleWMSBody::setActiveWMS(std::string wms) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<WMSConfig> SimpleWMSBody::getWMSs() {
+std::vector<WMSConfig> const& SimpleWMSBody::getWMSs() {
   return mWMSs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-WMSConfig SimpleWMSBody::getActiveWMS() {
+WMSConfig const& SimpleWMSBody::getActiveWMS() {
   return mActiveWMS;
 }
 

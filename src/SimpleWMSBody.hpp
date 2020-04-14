@@ -57,11 +57,11 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool Do() override;
   bool GetBoundingBox(VistaBoundingBox& bb) override;
 
-  std::vector<WMSConfig> getWMSs();
-  WMSConfig              getActiveWMS();
+  std::vector<WMSConfig> const& getWMSs();
+  WMSConfig const&              getActiveWMS();
 
-  void setActiveWMS(WMSConfig wms);
-  void setActiveWMS(std::string wms);
+  void setActiveWMS(WMSConfig const& wms);
+  void setActiveWMS(std::string const& wms);
 
   std::vector<TimeInterval> getTimeIntervals();
 

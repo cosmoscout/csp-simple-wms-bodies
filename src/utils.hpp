@@ -37,11 +37,11 @@ struct WMSConfig {
 
 namespace utils {
 
-std::string timeToString(std::string format, boost::posix_time::ptime time);
-void        matchDuration(const std::string& input, const std::regex& re, int& duration);
-void        timeDuration(std::string isoString, int& duration, std::string& format);
-void        convertIsoDate(std::string date, boost::posix_time::ptime& time);
-void        parseIsoString(std::string isoString, std::vector<TimeInterval>& timeIntervals);
+std::string timeToString(std::string const& format, boost::posix_time::ptime time);
+void        matchDuration(std::string const& input, std::regex const& re, int& duration);
+void        timeDuration(std::string const& isoString, int& duration, std::string& format);
+void        convertIsoDate(std::string& date, boost::posix_time::ptime& time);
+void        parseIsoString(std::string const& isoString, std::vector<TimeInterval>& timeIntervals);
 bool        timeInIntervals(boost::posix_time::ptime time, std::vector<TimeInterval>& timeIntervals,
            boost::posix_time::time_duration& timeSinceStart, int& intervalDuration, std::string& format);
 

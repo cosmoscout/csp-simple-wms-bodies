@@ -11,7 +11,7 @@
 
 namespace csp::simplewmsbodies::utils {
 
-std::string timeToString(std::string format, boost::posix_time::ptime time) {
+std::string timeToString(std::string const& format, boost::posix_time::ptime time) {
   std::stringstream sstr;
   auto              facet = new boost::posix_time::time_facet();
   facet->format(format.c_str());
@@ -21,7 +21,7 @@ std::string timeToString(std::string format, boost::posix_time::ptime time) {
   return sstr.str();
 }
 
-void matchDuration(const std::string& input, const std::regex& re, int& duration) {
+void matchDuration(std::string const& input, std::regex const& re, int& duration) {
   std::smatch match;
   std::regex_search(input, match, re);
   if (match.empty()) {
@@ -53,7 +53,7 @@ void matchDuration(const std::string& input, const std::regex& re, int& duration
   }
 }
 
-void timeDuration(std::string isoString, int& duration, std::string& format) {
+void timeDuration(std::string const& isoString, int& duration, std::string& format) {
   std::regex rshort("^((?!T).)*$");
   duration = 0;
   format   = "";
@@ -78,7 +78,7 @@ void timeDuration(std::string isoString, int& duration, std::string& format) {
   }
 }
 
-void convertIsoDate(std::string date, boost::posix_time::ptime& time) {
+void convertIsoDate(std::string& date, boost::posix_time::ptime& time) {
   if (date == "current") {
     time = boost::posix_time::microsec_clock::universal_time();
     return;
@@ -97,7 +97,7 @@ void convertIsoDate(std::string date, boost::posix_time::ptime& time) {
   time = boost::posix_time::from_iso_string(dateSubStr + timeSubStr);
 }
 
-void parseIsoString(std::string isoString, std::vector<TimeInterval>& timeIntervals) {
+void parseIsoString(std::string const& isoString, std::vector<TimeInterval>& timeIntervals) {
 
   std::string       timeRange;
   std::stringstream iso_stringstream(isoString);
