@@ -25,8 +25,8 @@ class Plugin : public cs::core::PluginBase {
 
     /// The startup settings for a planet.
     struct Body {
-      std::vector<Wms> mWms;     ///< The path to surface texture.
-      std::string      mTexture; ///< The data sets containing WMS data.
+      std::vector<WMSConfig> mWMS;     ///< The data sets containing WMS data.
+      std::string            mTexture; ///< The path to surface texture.
     };
 
     std::map<std::string, Body> mBodies;
@@ -42,16 +42,16 @@ class Plugin : public cs::core::PluginBase {
   std::vector<std::shared_ptr<SimpleWMSBody>> mSimpleWMSBodies;
   std::vector<VistaOpenGLNode*>               mSimpleWMSBodyNodes;
   std::shared_ptr<Properties>                 mProperties;
-  std::vector<timeInterval>                   mIntervalsOnTimeline;
+  std::vector<TimeInterval>                   mIntervalsOnTimeline;
 
   int mActiveBodyConnection = -1;
 
   /// Add the time intervalls of the current data set to timeline.
   void addTimeIntervall(
-      std::vector<timeInterval> timeIntervals, std::string wmsName, std::string planetName);
+      std::vector<TimeInterval> timeIntervals, std::string wmsName, std::string planetName);
 
   /// Remove the time intervalls of the current data set to timeline.
-  void removeTimeIntervall(std::vector<timeInterval> timeIntervals);
+  void removeTimeIntervall(std::vector<TimeInterval> timeIntervals);
 };
 
 } // namespace csp::simplewmsbodies

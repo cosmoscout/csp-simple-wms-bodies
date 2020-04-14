@@ -97,7 +97,7 @@ void convertIsoDate(std::string date, boost::posix_time::ptime& time) {
   time = boost::posix_time::from_iso_string(dateSubStr + timeSubStr);
 }
 
-void parseIsoString(std::string isoString, std::vector<timeInterval>& timeIntervals) {
+void parseIsoString(std::string isoString, std::vector<TimeInterval>& timeIntervals) {
 
   std::string       timeRange;
   std::stringstream iso_stringstream(isoString);
@@ -108,7 +108,7 @@ void parseIsoString(std::string isoString, std::vector<timeInterval>& timeInterv
     std::getline(timeRange_stringstream, startDate, '/');
     std::getline(timeRange_stringstream, endDate, '/');
     std::getline(timeRange_stringstream, duration, '/');
-    timeInterval             tmp;
+    TimeInterval             tmp;
     boost::posix_time::ptime start, end;
     convertIsoDate(startDate, start);
     if (endDate == "") {
@@ -120,19 +120,19 @@ void parseIsoString(std::string isoString, std::vector<timeInterval>& timeInterv
       convertIsoDate(endDate, end);
     }
 
-    tmp.endTime   = end;
-    tmp.startTime = start;
+    tmp.mEndTime   = end;
+    tmp.mStartTime = start;
     timeIntervals.push_back(tmp);
   }
 }
 
-bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval>& timeIntervals,
+bool timeInIntervals(boost::posix_time::ptime time, std::vector<TimeInterval>& timeIntervals,
     boost::posix_time::time_duration& timeSinceStart, int& intervalDuration, std::string& format) {
   for (int i = 0; i < timeIntervals.size(); i++) {
     boost::posix_time::time_duration td =
         boost::posix_time::seconds(timeIntervals.at(i).mIntervalDuration);
-    if (timeIntervals.at(i).startTime <= time && timeIntervals.at(i).endTime + td >= time) {
-      timeSinceStart   = time - timeIntervals.at(i).startTime;
+    if (timeIntervals.at(i).mStartTime <= time && timeIntervals.at(i).mEndTime + td >= time) {
+      timeSinceStart   = time - timeIntervals.at(i).mStartTime;
       intervalDuration = timeIntervals.at(i).mIntervalDuration;
       format           = timeIntervals.at(i).mFormat;
       return true;

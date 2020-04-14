@@ -133,22 +133,22 @@ void main()
 SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
     std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
     std::string sTexture, std::string const& sFrameName, double tStartExistence,
-    double tEndExistence, std::vector<Wms> tWms, std::shared_ptr<cs::core::TimeControl> timeControl,
-    std::shared_ptr<Properties> properties)
+    double tEndExistence, std::vector<WMSConfig> tWms,
+    std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
     , mGraphicsEngine(graphicsEngine)
     , mSolarSystem(solarSystem)
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
-    , mWmsTexture(new VistaTexture(GL_TEXTURE_2D))
+    , mWMSTexture(new VistaTexture(GL_TEXTURE_2D))
     , mDefaultTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
     , mOtherTexture(new VistaTexture(GL_TEXTURE_2D)) {
   pVisibleRadius      = mRadii[0];
   mTimeControl        = timeControl;
   mProperties         = properties;
-  mWms                = tWms;
+  mWMSs               = tWms;
   mDefaultTextureFile = sTexture;
 
-  setActiveWms(mWms.at(0));
+  setActiveWMS(mWMSs.at(0));
 
   // For rendering the sphere, we create a 2D-grid which is warped into a sphere in the vertex
   // shader. The vertex positions are directly used as texture coordinates.
@@ -257,14 +257,14 @@ glm::dvec3 SimpleWMSBody::getRadii() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool SimpleWMSBody::Do() {
-  std::lock_guard<std::mutex> guard(mWmsMutex);
+  std::lock_guard<std::mutex> guard(mWMSMutex);
   if (!getIsInExistence() || !pVisible.get()) {
     return true;
   }
 
   cs::utils::FrameTimings::ScopedTimer timer("Simple WMS Bodies");
 
-  if (mActiveWms.mTime.has_value()) {
+  if (mActiveWMS.mTime.has_value()) {
     boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
     for (int i = -mPreFetch; i <= mPreFetch; i++) {
@@ -291,7 +291,7 @@ bool SimpleWMSBody::Do() {
       if (iteratorText1 == mTextureFilesBuffer.end() && iteratorText2 == mTexturesBuffer.end() &&
           iteratorText3 == mTextures.end() && inInterval) {
         mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
-            mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWms.mLayers, mFormat)));
+            mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWMS.mLayers, mFormat)));
       }
     }
 
@@ -342,8 +342,8 @@ bool SimpleWMSBody::Do() {
     if (inInterval && !fileError) {
       if (mCurentTexture != timeString && iterator != mTextures.end()) {
         mDefaultTextureUsed = false;
-        mWmsTexture->UploadTexture(mTextureWidth, mTextureHeight, iterator->second, false);
-        mTexture       = mWmsTexture;
+        mWMSTexture->UploadTexture(mTextureWidth, mTextureHeight, iterator->second, false);
+        mTexture       = mWMSTexture;
         mCurentTexture = timeString;
       }
       // Use default planet texture.
@@ -486,31 +486,31 @@ boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime ti
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleWMSBody::setActiveWms(Wms wms) {
-  if (wmsInitialized) {
-    std::lock_guard<std::mutex> guard(mWmsMutex);
+void SimpleWMSBody::setActiveWMS(WMSConfig wms) {
+  if (mWMSInitialized) {
+    std::lock_guard<std::mutex> guard(mWMSMutex);
     for (auto it = mTextures.begin(); it != mTextures.end(); ++it) {
       stbi_image_free(it->second);
     }
   }
-  wmsInitialized = true;
+  mWMSInitialized = true;
   mTextures.clear();
   mTextureFilesBuffer.clear();
   mTexturesBuffer.clear();
-  mActiveWms = wms;
+  mActiveWMS = wms;
   std::stringstream url;
-  url << mActiveWms.mUrl << "&WIDTH=" << mActiveWms.mWidth << "&HEIGHT=" << mActiveWms.mHeight
-      << "&LAYERS=" << mActiveWms.mLayers;
+  url << mActiveWMS.mUrl << "&WIDTH=" << mActiveWMS.mWidth << "&HEIGHT=" << mActiveWMS.mHeight
+      << "&LAYERS=" << mActiveWMS.mLayers;
   mRequest               = url.str();
   std::string requestStr = mRequest;
-  mTextureWidth          = mActiveWms.mWidth;
-  mTextureHeight         = mActiveWms.mHeight;
+  mTextureWidth          = mActiveWMS.mWidth;
+  mTextureHeight         = mActiveWMS.mHeight;
 
-  mPreFetch = mActiveWms.preFetch.value_or(0);
+  mPreFetch = mActiveWMS.mPrefetchCount.value_or(0);
 
-  if (mActiveWms.mTime.has_value()) {
+  if (mActiveWMS.mTime.has_value()) {
     mTimeIntervals.clear();
-    utils::parseIsoString(mActiveWms.mTime.value(), mTimeIntervals);
+    utils::parseIsoString(mActiveWMS.mTime.value(), mTimeIntervals);
     mIntervalDuration   = mTimeIntervals.at(0).mIntervalDuration;
     mFormat             = mTimeIntervals.at(0).mFormat;
     mTexture            = mDefaultTexture;
@@ -518,7 +518,7 @@ void SimpleWMSBody::setActiveWms(Wms wms) {
     mCurentTexture      = "";
   } else {
     std::ofstream out;
-    std::string   cacheFile = "../share/resources/textures/" + mActiveWms.mLayers + ".png";
+    std::string   cacheFile = "../share/resources/textures/" + mActiveWMS.mLayers + ".png";
     out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
 
     if (!out) {
@@ -539,27 +539,27 @@ void SimpleWMSBody::setActiveWms(Wms wms) {
   }
 }
 
-void SimpleWMSBody::setActiveWms(std::string wms) {
-  for (int i = 0; i < mWms.size(); i++) {
-    if (wms == mWms.at(i).mName) {
-      setActiveWms(mWms.at(i));
+void SimpleWMSBody::setActiveWMS(std::string wms) {
+  for (int i = 0; i < mWMSs.size(); i++) {
+    if (wms == mWMSs.at(i).mName) {
+      setActiveWMS(mWMSs.at(i));
     }
   }
 }
 
-std::vector<Wms> SimpleWMSBody::getWms() {
-  return mWms;
+std::vector<WMSConfig> SimpleWMSBody::getWMSs() {
+  return mWMSs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Wms SimpleWMSBody::getActiveWms() {
-  return mActiveWms;
+WMSConfig SimpleWMSBody::getActiveWMS() {
+  return mActiveWMS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<timeInterval> SimpleWMSBody::getTimeIntervals() {
+std::vector<TimeInterval> SimpleWMSBody::getTimeIntervals() {
   return mTimeIntervals;
 }
 

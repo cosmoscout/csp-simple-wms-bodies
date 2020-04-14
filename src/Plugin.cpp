@@ -33,21 +33,21 @@ namespace csp::simplewmsbodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void from_json(const nlohmann::json& j, Wms& o) {
-  o.mName      = cs::core::parseProperty<std::string>("name", j);
-  o.mCopyright = cs::core::parseProperty<std::string>("copyright", j);
-  o.mUrl       = cs::core::parseProperty<std::string>("url", j);
-  o.mWidth     = cs::core::parseProperty<int>("width", j);
-  o.mHeight    = cs::core::parseProperty<int>("height", j);
-  o.mTime      = cs::core::parseOptional<std::string>("time", j);
-  o.preFetch   = cs::core::parseOptional<int>("preFetch", j);
-  o.mLayers    = cs::core::parseProperty<std::string>("layers", j);
+void from_json(const nlohmann::json& j, WMSConfig& o) {
+  o.mName          = cs::core::parseProperty<std::string>("name", j);
+  o.mCopyright     = cs::core::parseProperty<std::string>("copyright", j);
+  o.mUrl           = cs::core::parseProperty<std::string>("url", j);
+  o.mWidth         = cs::core::parseProperty<int>("width", j);
+  o.mHeight        = cs::core::parseProperty<int>("height", j);
+  o.mTime          = cs::core::parseOptional<std::string>("time", j);
+  o.mPrefetchCount = cs::core::parseOptional<int>("preFetch", j);
+  o.mLayers        = cs::core::parseProperty<std::string>("layers", j);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
-  o.mWms     = cs::core::parseVector<Wms>("wms", j);
+  o.mWMS     = cs::core::parseVector<WMSConfig>("wms", j);
   o.mTexture = cs::core::parseProperty<std::string>("texture", j);
 }
 
@@ -103,7 +103,7 @@ void Plugin::init() {
 
     auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem,
         anchor->second.mCenter, bodySettings.second.mTexture, anchor->second.mFrame,
-        tStartExistence, tEndExistence, bodySettings.second.mWms, mTimeControl, mProperties);
+        tStartExistence, tEndExistence, bodySettings.second.mWMS, mTimeControl, mProperties);
 
     mSolarSystem->registerBody(body);
     mInputManager->registerSelectable(body);
@@ -130,8 +130,8 @@ void Plugin::init() {
 
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.gui.clearDropdown", "simpleWmsBodies.setWMS");
-        for (auto const& wms : simpleWMSBody->getWms()) {
-          bool active = wms.mName == simpleWMSBody->getActiveWms().mName;
+        for (auto const& wms : simpleWMSBody->getWMSs()) {
+          bool active = wms.mName == simpleWMSBody->getActiveWMS().mName;
           mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
               "simpleWmsBodies.setWMS", wms.mName, wms.mName, active);
           if (active) {
@@ -150,8 +150,8 @@ void Plugin::init() {
         auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
         if (body) {
           removeTimeIntervall(mIntervalsOnTimeline);
-          body->setActiveWms(name);
-          auto wms = body->getActiveWms();
+          body->setActiveWMS(name);
+          auto wms = body->getActiveWMS();
 
           mGuiManager->getGui()->callJavascript(
               "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
@@ -166,10 +166,10 @@ void Plugin::init() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
+void Plugin::removeTimeIntervall(std::vector<TimeInterval> timeIntervals) {
   for (int i = 0; i < timeIntervals.size(); i++) {
-    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
-    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
+    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mStartTime);
+    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mEndTime);
     if (start == end) {
       end = "";
     }
@@ -181,10 +181,10 @@ void Plugin::removeTimeIntervall(std::vector<timeInterval> timeIntervals) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Plugin::addTimeIntervall(
-    std::vector<timeInterval> timeIntervals, std::string wmsName, std::string planetName) {
+    std::vector<TimeInterval> timeIntervals, std::string wmsName, std::string planetName) {
   for (int i = 0; i < timeIntervals.size(); i++) {
-    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).startTime);
-    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).endTime);
+    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mStartTime);
+    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mEndTime);
     if (start == end) {
       end = "";
     }

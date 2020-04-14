@@ -36,7 +36,7 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
       std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
       std::string sTexture, std::string const& sFrameName, double tStartExistence,
-      double tEndExistence, std::vector<Wms> tWms,
+      double tEndExistence, std::vector<WMSConfig> tWms,
       std::shared_ptr<cs::core::TimeControl> timeControl,
       std::shared_ptr<Properties>            properties = nullptr);
   ~SimpleWMSBody() override;
@@ -57,25 +57,25 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool Do() override;
   bool GetBoundingBox(VistaBoundingBox& bb) override;
 
-  std::vector<Wms> getWms();
-  Wms              getActiveWms();
+  std::vector<WMSConfig> getWMSs();
+  WMSConfig              getActiveWMS();
 
-  void setActiveWms(Wms wms);
-  void setActiveWms(std::string wms);
+  void setActiveWMS(WMSConfig wms);
+  void setActiveWMS(std::string wms);
 
-  std::vector<timeInterval> getTimeIntervals();
+  std::vector<TimeInterval> getTimeIntervals();
 
  private:
   std::shared_ptr<cs::core::GraphicsEngine> mGraphicsEngine;
   std::shared_ptr<cs::core::SolarSystem>    mSolarSystem;
 
-  std::vector<Wms> mWms;
-  Wms              mActiveWms;
-  std::mutex       mWmsMutex;
-  bool             wmsInitialized = false;
+  std::vector<WMSConfig> mWMSs;
+  WMSConfig              mActiveWMS;
+  std::mutex             mWMSMutex;
+  bool                   mWMSInitialized = false;
 
   std::shared_ptr<VistaTexture> mTexture;
-  std::shared_ptr<VistaTexture> mWmsTexture;
+  std::shared_ptr<VistaTexture> mWMSTexture;
   std::shared_ptr<VistaTexture> mOtherTexture;
   std::shared_ptr<VistaTexture> mDefaultTexture;
   std::string                   mDefaultTextureFile;
@@ -87,7 +87,7 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   int                           mTextureWidth;
   int                           mTextureHeight;
   int mPreFetch; /// Amount of textures that gets prefetched in every direction.
-  std::vector<timeInterval> mTimeIntervals;
+  std::vector<TimeInterval> mTimeIntervals;
   bool                      mDefaultTextureUsed;
 
   VistaGLSLShader        mShader;
