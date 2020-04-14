@@ -100,7 +100,9 @@ vec3 SRGBtoLINEAR(vec3 srgbIn)
 
 void main()
 {
+    // WMS texture
     vec4 texColor = texture(uSurfaceTexture, vTexCoords);
+    // Default planet surface texture
     vec3 defColor = texture(uDefaultTexture, vTexCoords).rgb;
     oColor = mix(defColor, texColor.rgb, texColor.a); 
     // Fade texture in.
@@ -138,7 +140,6 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
     , mSolarSystem(solarSystem)
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
     , mWmsTexture(new VistaTexture(GL_TEXTURE_2D))
-    // , mDefaultTexture(new VistaTexture(GL_TEXTURE_2D))
     , mDefaultTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
     , mOtherTexture(new VistaTexture(GL_TEXTURE_2D)) {
   pVisibleRadius      = mRadii[0];
