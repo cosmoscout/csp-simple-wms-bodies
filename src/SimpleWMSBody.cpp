@@ -539,6 +539,8 @@ void SimpleWMSBody::setActiveWMS(WMSConfig wms) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void SimpleWMSBody::setActiveWMS(std::string wms) {
   for (int i = 0; i < mWMSs.size(); i++) {
     if (wms == mWMSs.at(i).mName) {
