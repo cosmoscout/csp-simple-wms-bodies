@@ -83,11 +83,8 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::string                   mRequest;
   std::string                   mFormat;
   int                           mIntervalDuration;
-  int                           mTextureWidth;
-  int                           mTextureHeight;
-  int mPreFetch; /// Amount of textures that gets prefetched in every direction.
-  std::vector<TimeInterval> mTimeIntervals;
-  bool                      mDefaultTextureUsed;
+  std::vector<TimeInterval>     mTimeIntervals;
+  bool                          mDefaultTextureUsed;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;

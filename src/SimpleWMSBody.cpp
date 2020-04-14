@@ -258,7 +258,8 @@ bool SimpleWMSBody::Do() {
   if (mActiveWMS.mTime.has_value()) {
     boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
-    for (int i = -mPreFetch; i <= mPreFetch; i++) {
+    for (int i = -mActiveWMS.mPrefetchCount.value_or(0); i <= mActiveWMS.mPrefetchCount.value_or(0);
+         i++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
       time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get()) + td * i;
       boost::posix_time::time_duration timeSinceStart;
@@ -333,7 +334,7 @@ bool SimpleWMSBody::Do() {
     if (inInterval && !fileError) {
       if (mCurentTexture != timeString && iterator != mTextures.end()) {
         mDefaultTextureUsed = false;
-        mWMSTexture->UploadTexture(mTextureWidth, mTextureHeight, iterator->second, false);
+        mWMSTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, iterator->second, false);
         mTexture       = mWMSTexture;
         mCurentTexture = timeString;
       }
@@ -352,7 +353,7 @@ bool SimpleWMSBody::Do() {
       auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
       if (it != mTextures.end()) {
         if (mCurentOtherTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
-          mOtherTexture->UploadTexture(mTextureWidth, mTextureHeight, it->second, false);
+          mOtherTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, it->second, false);
           mCurentOtherTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
           mOtherTextureUsed   = true;
         }
@@ -487,10 +488,6 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
       << "&LAYERS=" << mActiveWMS.mLayers;
   mRequest               = url.str();
   std::string requestStr = mRequest;
-  mTextureWidth          = mActiveWMS.mWidth;
-  mTextureHeight         = mActiveWMS.mHeight;
-
-  mPreFetch = mActiveWMS.mPrefetchCount.value_or(0);
 
   if (mActiveWMS.mTime.has_value()) {
     mTimeIntervals.clear();
