@@ -72,7 +72,6 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::vector<WMSConfig> mWMSs;
   WMSConfig              mActiveWMS;
   std::mutex             mWMSMutex;
-  bool                   mWMSInitialized = false;
 
   std::shared_ptr<VistaTexture> mTexture;
   std::shared_ptr<VistaTexture> mWMSTexture;

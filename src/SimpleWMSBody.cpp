@@ -12,11 +12,6 @@
 #include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/utils.hpp"
 
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-#include <stb_image.h>
-#include <stb_image_write.h>
-
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
 
@@ -198,10 +193,6 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleWMSBody::~SimpleWMSBody() {
-  for (auto it = mTextures.begin(); it != mTextures.end(); ++it) {
-    stbi_image_free(it->second);
-  }
-
   mGraphicsEngine->pEnableLighting.disconnect(mEnableLightingConnection);
   mGraphicsEngine->pEnableHDR.disconnect(mEnableHDRConnection);
 }
@@ -487,13 +478,6 @@ boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime ti
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
-  if (mWMSInitialized) {
-    std::lock_guard<std::mutex> guard(mWMSMutex);
-    for (auto it = mTextures.begin(); it != mTextures.end(); ++it) {
-      stbi_image_free(it->second);
-    }
-  }
-  mWMSInitialized = true;
   mTextures.clear();
   mTextureFilesBuffer.clear();
   mTexturesBuffer.clear();
