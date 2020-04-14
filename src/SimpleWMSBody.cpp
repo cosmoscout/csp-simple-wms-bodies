@@ -262,7 +262,7 @@ bool SimpleWMSBody::Do() {
     return true;
   }
 
-  cs::utils::FrameTimings::ScopedTimer timer("Simple Wms Planets");
+  cs::utils::FrameTimings::ScopedTimer timer("Simple WMS Bodies");
 
   if (mActiveWms.mTime.has_value()) {
     boost::posix_time::ptime time =
