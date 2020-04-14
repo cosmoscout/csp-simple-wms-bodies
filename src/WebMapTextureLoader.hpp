@@ -9,7 +9,7 @@
 
 #include "../../../src/cs-utils/ThreadPool.hpp"
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 class WebMapTextureLoader {
  public:
@@ -33,6 +33,6 @@ class WebMapTextureLoader {
   cs::utils::ThreadPool mThreadPool;
 };
 
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies
 
 #endif // CSP_WMS_TEXTURE_LOADER_HPP

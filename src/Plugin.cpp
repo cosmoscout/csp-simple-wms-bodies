@@ -18,7 +18,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 EXPORT_FN cs::core::PluginBase* create() {
-  return new csp::simpleWmsBodies::Plugin;
+  return new csp::simplewmsbodies::Plugin;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +29,7 @@ EXPORT_FN void destroy(cs::core::PluginBase* pluginBase) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -80,12 +80,13 @@ void Plugin::init() {
   mGuiManager->addScriptToGuiFromJS("../share/resources/gui/js/csp-simple-wms-bodies.js");
 
   // Set whether to interpolate textures between timesteps.
-  mGuiManager->getGui()->registerCallback("wms.setEnableInterpolation",
+  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableInterpolation",
       "Enables or disables interpolation.",
       std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
 
   // Set whether to display the entire timespan.
-  mGuiManager->getGui()->registerCallback("wms.setEnableTimeSpan", "Enables or disables timespan.",
+  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableTimeSpan",
+      "Enables or disables timespan.",
       std::function([this](bool enable) { mProperties->mEnableTimespan = enable; }));
 
   for (auto const& bodySettings : mPluginSettings.mBodies) {
@@ -127,11 +128,12 @@ void Plugin::init() {
           return;
         }
 
-        mGuiManager->getGui()->callJavascript("CosmoScout.gui.clearDropdown", "wms.setTilesImg");
+        mGuiManager->getGui()->callJavascript(
+            "CosmoScout.gui.clearDropdown", "simpleWmsBodies.setWMS");
         for (auto const& wms : simpleWMSBody->getWms()) {
           bool active = wms.mName == simpleWMSBody->getActiveWms().mName;
-          mGuiManager->getGui()->callJavascript(
-              "CosmoScout.gui.addDropdownValue", "wms.setTilesImg", wms.mName, wms.mName, active);
+          mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
+              "simpleWmsBodies.setWMS", wms.mName, wms.mName, active);
           if (active) {
             mGuiManager->getGui()->callJavascript(
                 "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
@@ -142,8 +144,8 @@ void Plugin::init() {
         }
       });
 
-  mGuiManager->getGui()->registerCallback("wms.setTilesImg",
-      "Set the current planet's wms channel to the TileSource with the given name.",
+  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setWMS",
+      "Set the current planet's WMS source to the one with the given name.",
       std::function([this](std::string&& name) {
         auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
         if (body) {
@@ -208,13 +210,13 @@ void Plugin::deInit() {
 
   mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
 
-  mGuiManager->getGui()->unregisterCallback("wms.setEnableInterpolation");
-  mGuiManager->getGui()->unregisterCallback("wms.setEnableTimeSpan");
-  mGuiManager->getGui()->unregisterCallback("wms.setTilesImg");
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableInterpolation");
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeSpan");
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setWMS");
 
   spdlog::info("Unloading done.");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies

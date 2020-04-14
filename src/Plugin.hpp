@@ -13,7 +13,7 @@
 
 #include <VistaKernel/GraphicsManager/VistaOpenGLNode.h>
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 /// This plugin provides the rendering of planets as spheres with a texture and an additional WMS
 /// based texture. Despite its name it can also render moons :P. It can be configured via the
@@ -54,6 +54,6 @@ class Plugin : public cs::core::PluginBase {
   void removeTimeIntervall(std::vector<timeInterval> timeIntervals);
 };
 
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies
 
 #endif // CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP

@@ -20,7 +20,7 @@
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -564,4 +564,4 @@ std::vector<timeInterval> SimpleWMSBody::getTimeIntervals() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies

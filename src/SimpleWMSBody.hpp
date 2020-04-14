@@ -22,7 +22,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 struct Properties {
   cs::utils::Property<bool> mEnableInterpolation = true;
@@ -123,6 +123,6 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   boost::posix_time::ptime getStartTime(boost::posix_time::ptime time);
 };
 
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies
 
 #endif // CSP_WMS_SIMPLE_BODIES_HPP

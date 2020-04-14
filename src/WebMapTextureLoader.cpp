@@ -16,7 +16,7 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 WebMapTextureLoader::WebMapTextureLoader()
     : mThreadPool(32) {
@@ -94,4 +94,4 @@ std::future<unsigned char*> WebMapTextureLoader::loadTextureFromFileAsync(std::s
   });
 }
 
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies

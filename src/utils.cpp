@@ -9,7 +9,7 @@
 #include "../../../src/cs-utils/logger.hpp"
 #include "../../../src/cs-utils/utils.hpp"
 
-namespace csp::simpleWmsBodies::utils {
+namespace csp::simplewmsbodies::utils {
 
 std::string timeToString(std::string format, boost::posix_time::ptime time) {
   std::stringstream sstr;
@@ -141,4 +141,4 @@ bool timeInIntervals(boost::posix_time::ptime time, std::vector<timeInterval>& t
   return false;
 }
 
-} // namespace csp::simpleWmsBodies::utils
+} // namespace csp::simplewmsbodies::utils

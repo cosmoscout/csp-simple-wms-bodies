@@ -12,7 +12,7 @@
 #include <optional>
 #include <regex>
 
-namespace csp::simpleWmsBodies {
+namespace csp::simplewmsbodies {
 
 /// Struct of timeintervalls of the data set
 struct timeInterval {
@@ -46,6 +46,6 @@ bool        timeInIntervals(boost::posix_time::ptime time, std::vector<timeInter
 
 } // namespace utils
 
-} // namespace csp::simpleWmsBodies
+} // namespace csp::simplewmsbodies
 
 #endif // CSP_WMS_UTILS_HPP
