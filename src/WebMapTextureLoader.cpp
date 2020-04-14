@@ -34,7 +34,7 @@ bool fileExist(const char* fileName) {
 }
 
 std::string WebMapTextureLoader::loadTexture(
-    std::string time, std::string requestStr, std::string name, std::string format) {
+    std::string time, std::string requestStr, std::string const& name, std::string const& format) {
   std::string       cacheDir = "../share/resources/textures/" + name + "/";
   std::string       year;
   std::stringstream time_stringstream(time);
@@ -84,12 +84,13 @@ std::string WebMapTextureLoader::loadTexture(
   return cacheFile;
 }
 
-std::future<std::string> WebMapTextureLoader::loadTextureAsync(
-    std::string time, std::string requestStr, std::string centerName, std::string format) {
+std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time,
+    std::string requestStr, std::string const& centerName, std::string const& format) {
   return mThreadPool.enqueue([=]() { return loadTexture(time, requestStr, centerName, format); });
 }
 
-std::future<unsigned char*> WebMapTextureLoader::loadTextureFromFileAsync(std::string fileName) {
+std::future<unsigned char*> WebMapTextureLoader::loadTextureFromFileAsync(
+    std::string const& fileName) {
   return mThreadPool.enqueue([=]() {
     int width, height, bpp;
     int channels = 4;
