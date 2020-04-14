@@ -547,6 +547,8 @@ void SimpleWMSBody::setActiveWMS(std::string wms) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<WMSConfig> SimpleWMSBody::getWMSs() {
   return mWMSs;
 }
