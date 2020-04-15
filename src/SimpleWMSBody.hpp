@@ -29,8 +29,8 @@ struct Properties {
   cs::utils::Property<bool> mEnableTimespan      = false;
 };
 
-/// This is just a sphere with a texture, attached to the given SPICE frame. The texture should be
-/// in equirectangular projection.
+/// This is just a sphere with a background texture overlaid with WMS based textures, attached to
+/// the given SPICE frame. All of the textures should be in equirectangular projection.
 class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
   SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,

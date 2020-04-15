@@ -1,6 +1,6 @@
 # Simple WMS bodies for CosmoScout VR
 
-A CosmoSout VR plugin which renders simple spherical celestial bodies with WMS based textures. The bodies are drawn as an ellipsoid with an equirectangular texture.
+A CosmoSout VR plugin which renders simple spherical celestial bodies using a background surface texture and overlays it with time dependent WMS based textures. The bodies are drawn as an ellipsoid with an equirectangular texture.
 
 ## Configuration
 
@@ -14,7 +14,7 @@ This plugin can be enabled with the following configuration in your `settings.js
     "csp-simple-wms-bodies": {
       "bodies": {
         <anchor name>: {
-          "texture": <string>,        // The path to surface texture.
+          "texture": <string>,        // The path to background surface texture. The texture from the WMS image will be overlaid.
           "wms": [
             {
               "name": <string>,       // The name of the data set as shown in the UI.
