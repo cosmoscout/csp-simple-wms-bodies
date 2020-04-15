@@ -43,12 +43,12 @@ const float PI = 3.141592654;
 
 void main()
 {
-    vTexCoords = vec2(iGridPos.x, 1-iGridPos.y);
+    vTexCoords = vec2(iGridPos.x, 1 - iGridPos.y);
     vLonLat.x = iGridPos.x * 2.0 * PI;
-    vLonLat.y = (iGridPos.y-0.5) * PI;
+    vLonLat.y = (iGridPos.y - 0.5) * PI;
     vPosition = uRadii * vec3(
         -sin(vLonLat.x) * cos(vLonLat.y),
-        -cos(vLonLat.y+PI*0.5),
+        -cos(vLonLat.y + PI * 0.5),
         -cos(vLonLat.x) * cos(vLonLat.y)
     );
     vPosition   = (uMatModelView * vec4(vPosition, 1.0)).xyz;
@@ -89,8 +89,8 @@ layout(location = 0) out vec3 oColor;
 
 vec3 SRGBtoLINEAR(vec3 srgbIn)
 {
-  vec3 bLess = step(vec3(0.04045),srgbIn);
-  return mix( srgbIn/vec3(12.92), pow((srgbIn+vec3(0.055))/vec3(1.055),vec3(2.4)), bLess );
+  vec3 bLess = step(vec3(0.04045), srgbIn);
+  return mix(srgbIn / vec3(12.92), pow((srgbIn + vec3(0.055)) / vec3(1.055), vec3(2.4)), bLess);
 }
 
 void main()
@@ -116,7 +116,7 @@ void main()
     #ifdef ENABLE_LIGHTING
       vec3 normal = normalize(vPosition - vCenter);
       float light = max(dot(normal, uSunDirection), 0.0);
-      oColor = mix(oColor*uAmbientBrightness, oColor, light);
+      oColor = mix(oColor * uAmbientBrightness, oColor, light);
     #endif
 
     gl_FragDepth = length(vPosition) / uFarClip;
@@ -258,6 +258,7 @@ bool SimpleWMSBody::Do() {
   if (mActiveWMS.mTime.has_value()) {
     boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
+
     for (int i = -mActiveWMS.mPrefetchCount.value_or(0); i <= mActiveWMS.mPrefetchCount.value_or(0);
          i++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
@@ -267,10 +268,12 @@ bool SimpleWMSBody::Do() {
           time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
       bool inInterval = utils::timeInIntervals(
           startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+
       if (mIntervalDuration != 0) {
         startTime -= boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
       }
       std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
+
       if (mProperties->mEnableTimespan.get()) {
         boost::posix_time::time_duration timeDuration =
             boost::posix_time::seconds(mIntervalDuration);
@@ -280,6 +283,7 @@ bool SimpleWMSBody::Do() {
       auto iteratorText1 = mTextureFilesBuffer.find(timeString);
       auto iteratorText2 = mTexturesBuffer.find(timeString);
       auto iteratorText3 = mTextures.find(timeString);
+
       if (iteratorText1 == mTextureFilesBuffer.end() && iteratorText2 == mTexturesBuffer.end() &&
           iteratorText3 == mTextures.end() && inInterval) {
         mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
@@ -293,6 +297,7 @@ bool SimpleWMSBody::Do() {
     for (auto it = mTextureFilesBuffer.begin(); it != mTextureFilesBuffer.end(); ++it) {
       if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
         std::string fileName = it->second.get();
+
         if (fileName != "Error") {
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
               it->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
@@ -319,11 +324,13 @@ bool SimpleWMSBody::Do() {
         time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
     bool inInterval = utils::timeInIntervals(
         startTime, mTimeIntervals, timeSinceStart, mIntervalDuration, mFormat);
+
     if (mIntervalDuration != 0) {
       startTime -= boost::posix_time::seconds(timeSinceStart.total_seconds() % mIntervalDuration);
     }
     boost::posix_time::time_duration timeDuration = boost::posix_time::seconds(mIntervalDuration);
     std::string                      timeString   = utils::timeToString(mFormat.c_str(), startTime);
+
     if (mProperties->mEnableTimespan.get()) {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
@@ -351,6 +358,7 @@ bool SimpleWMSBody::Do() {
     } else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
+
       if (it != mTextures.end()) {
         if (mCurentOtherTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
           mOtherTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, it->second, false);
@@ -450,6 +458,7 @@ bool SimpleWMSBody::Do() {
   // Clean up.
   mTexture->Unbind(GL_TEXTURE0);
   mDefaultTexture->Unbind(GL_TEXTURE1);
+
   if (mOtherTextureUsed) {
     mOtherTexture->Unbind(GL_TEXTURE2);
   }
@@ -509,6 +518,7 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
     request.setOpt(curlpp::options::Url(requestStr));
     request.setOpt(curlpp::options::WriteStream(&out));
     request.setOpt(curlpp::options::NoSignal(true));
+
     try {
       request.perform();
     } catch (std::exception& e) {
