@@ -84,7 +84,7 @@ void Plugin::init() {
   mGuiManager->addScriptToGuiFromJS("../share/resources/gui/js/csp-simple-wms-bodies.js");
 
   // Set whether to interpolate textures between timesteps.
-  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableInterpolation",
+  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableTimeInterpolation",
       "Enables or disables interpolation.",
       std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
 
@@ -214,7 +214,7 @@ void Plugin::deInit() {
 
   mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
 
-  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableInterpolation");
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeInterpolation");
   mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeSpan");
   mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setWMS");
 
