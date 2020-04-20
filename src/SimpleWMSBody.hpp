@@ -62,11 +62,13 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool Do() override;
   bool GetBoundingBox(VistaBoundingBox& bb) override;
 
+  /// Getter for the WMS configs of the active body.
   std::vector<WMSConfig> const& getWMSs();
-  WMSConfig const&              getActiveWMS();
 
-  void setActiveWMS(WMSConfig const& wms);
-  void setActiveWMS(std::string const& wms);
+  /// Setter and getter for the active WMS data set.
+  void             setActiveWMS(WMSConfig const& wms);
+  void             setActiveWMS(std::string const& wms);
+  WMSConfig const& getActiveWMS();
 
   std::vector<TimeInterval> getTimeIntervals();
 
@@ -77,11 +79,10 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::shared_ptr<cs::core::TimeControl>            mTimeControl;
 
   glm::dvec3 mRadii;
+  std::mutex mWMSMutex;
 
-  std::vector<WMSConfig> mWMSs;
-  WMSConfig              mActiveWMS;
-  std::mutex             mWMSMutex;
-
+  std::vector<WMSConfig>        mWMSs;              ///< WMS configs of the active body.
+  WMSConfig                     mActiveWMS;         ///< WMS config of the active WMS data set.
   std::shared_ptr<VistaTexture> mBackgroundTexture; ///< The background texture of the body.
   std::shared_ptr<VistaTexture> mWMSTexture;        ///< The WMS texture.
   std::shared_ptr<VistaTexture> mSecondWMSTexture;  ///< Second WMS texture for time interpolation.
@@ -91,10 +92,10 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::string mCurentTexture;                           ///< Timestep of the current WMS texture.
   std::string mCurentSecondTexture;                     ///< Timestep of the second WMS texture.
   float       mFade;                                    ///< Fading value between WMS textures.
-  std::string mRequest;
-  std::string mFormat;
-  int         mIntervalDuration;
-  std::vector<TimeInterval> mTimeIntervals;
+  std::string mRequest;                                 ///< WMS server request URL.
+  std::string mFormat;                                  ///< Time format style.
+  int         mIntervalDuration;                        ///< Duration of the current time interval.
+  std::vector<TimeInterval> mTimeIntervals;             ///< Time intervals of data set.
 
   std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
   std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;

@@ -268,10 +268,10 @@ bool SimpleWMSBody::Do() {
     boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
 
-    for (int i = -mActiveWMS.mPrefetchCount.value_or(0); i <= mActiveWMS.mPrefetchCount.value_or(0);
-         i++) {
+    for (int preFetch = -mActiveWMS.mPrefetchCount.value_or(0);
+         preFetch <= mActiveWMS.mPrefetchCount.value_or(0); preFetch++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
-      time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get()) + td * i;
+      time = cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get()) + td * preFetch;
       boost::posix_time::time_duration timeSinceStart;
       boost::posix_time::ptime         startTime =
           time - boost::posix_time::microseconds(time.time_of_day().fractional_seconds());
@@ -289,12 +289,13 @@ bool SimpleWMSBody::Do() {
         boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
         timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
       }
-      auto iteratorText1 = mTextureFilesBuffer.find(timeString);
-      auto iteratorText2 = mTexturesBuffer.find(timeString);
-      auto iteratorText3 = mTextures.find(timeString);
+      auto texture1 = mTextureFilesBuffer.find(timeString);
+      auto texture2 = mTexturesBuffer.find(timeString);
+      auto texture3 = mTextures.find(timeString);
 
-      if (iteratorText1 == mTextureFilesBuffer.end() && iteratorText2 == mTexturesBuffer.end() &&
-          iteratorText3 == mTextures.end() && inInterval) {
+      if (texture1 == mTextureFilesBuffer.end() && texture2 == mTexturesBuffer.end() &&
+          texture3 == mTextures.end() && inInterval) {
+        // Load WMS texture to the disk.
         mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
             mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWMS.mLayers, mFormat)));
       }
@@ -302,28 +303,30 @@ bool SimpleWMSBody::Do() {
 
     bool fileError = false;
 
-    // Load Wms textures to buffer.
-    for (auto it = mTextureFilesBuffer.begin(); it != mTextureFilesBuffer.end(); ++it) {
-      if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        std::string fileName = it->second.get();
+    // Check whether the WMS textures are loaded to the disk.
+    for (auto tex = mTextureFilesBuffer.begin(); tex != mTextureFilesBuffer.end(); ++tex) {
+      if (tex->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        std::string fileName = tex->second.get();
 
         if (fileName != "Error") {
+          // Load WMS texture to memory
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
-              it->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
+              tex->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
         } else {
           fileError = true;
+          // Load background texture instead.
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
-              it->first, mTextureLoader.loadTextureFromFileAsync(mBackgroundTextureFile)));
+              tex->first, mTextureLoader.loadTextureFromFileAsync(mBackgroundTextureFile)));
         }
-        mTextureFilesBuffer.erase(it);
+        mTextureFilesBuffer.erase(tex);
       }
     }
 
-    // Add loaded textures to map.
-    for (auto it = mTexturesBuffer.begin(); it != mTexturesBuffer.end(); ++it) {
-      if (it->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        mTextures.insert(std::pair<std::string, unsigned char*>(it->first, it->second.get()));
-        mTexturesBuffer.erase(it);
+    // Check whether the WMS textures are loaded to the memory.
+    for (auto tex = mTexturesBuffer.begin(); tex != mTexturesBuffer.end(); ++tex) {
+      if (tex->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        mTextures.insert(std::pair<std::string, unsigned char*>(tex->first, tex->second.get()));
+        mTexturesBuffer.erase(tex);
       }
     }
 
@@ -344,34 +347,37 @@ bool SimpleWMSBody::Do() {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
     }
-    auto iterator = mTextures.find(timeString);
+    auto tex = mTextures.find(timeString);
 
     // Use Wms texture inside the interval.
     if (inInterval && !fileError) {
-      if (mCurentTexture != timeString && iterator != mTextures.end()) {
+      // Only update if we have a new texture.
+      if (mCurentTexture != timeString && tex != mTextures.end()) {
         mWMSTextureUsed = true;
-        mWMSTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, iterator->second, false);
+        mWMSTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, tex->second, false);
         mCurentTexture = timeString;
       }
-      // Use default planet texture.
-    } else {
+    } // Use default planet texture instead.
+    else {
       mWMSTextureUsed = false;
     }
 
     if (!mWMSTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
       mSecondWMSTextureUsed = false;
-      // Create fading between Wms textures.
-    } else {
+    } // Create fading between Wms textures when interpolation is enabled.
+    else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
-      auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
+      tex = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
 
-      if (it != mTextures.end()) {
+      if (tex != mTextures.end()) {
+        // Only update if we ha a new second texture.
         if (mCurentSecondTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
           mSecondWMSTexture->UploadTexture(
-              mActiveWMS.mWidth, mActiveWMS.mHeight, it->second, false);
-          mCurentSecondTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
+              mActiveWMS.mWidth, mActiveWMS.mHeight, tex->second, false);
+          mCurentSecondTexture  = utils::timeToString(mFormat.c_str(), intervalAfter);
           mSecondWMSTextureUsed = true;
         }
+        // Interpolate fade value between the 2 WMS textures.
         mFade = static_cast<float>((double)(intervalAfter - time).total_seconds() /
                                    (double)(intervalAfter - startTime).total_seconds());
       }
@@ -450,6 +456,7 @@ bool SimpleWMSBody::Do() {
   mShader.SetUniform(
       mShader.GetUniformLocation("uFarClip"), cs::utils::getCurrentFarClipDistance());
 
+  // Only bind the enabled textures.
   mBackgroundTexture->Bind(GL_TEXTURE0);
   if (mWMSTextureUsed) {
     mWMSTexture->Bind(GL_TEXTURE1);
@@ -512,17 +519,19 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   mCurentSecondTexture  = "";
   mActiveWMS            = wms;
 
+  // Create request URL for map server.
   std::stringstream url;
   url << mActiveWMS.mUrl << "&WIDTH=" << mActiveWMS.mWidth << "&HEIGHT=" << mActiveWMS.mHeight
       << "&LAYERS=" << mActiveWMS.mLayers;
-  mRequest               = url.str();
-  std::string requestStr = mRequest;
+  mRequest = url.str();
 
+  // Set time intervals and format if it is defined in config.
   if (mActiveWMS.mTime.has_value()) {
     utils::parseIsoString(mActiveWMS.mTime.value(), mTimeIntervals);
     mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
     mFormat           = mTimeIntervals.at(0).mFormat;
-  } else {
+  } // Download WMS texture.
+  else {
     std::ofstream out;
     std::string   cacheFile = "../share/resources/textures/" + mActiveWMS.mLayers + ".png";
     out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
@@ -532,21 +541,22 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
     }
 
     curlpp::Easy request;
-    request.setOpt(curlpp::options::Url(requestStr));
+    request.setOpt(curlpp::options::Url(mRequest));
     request.setOpt(curlpp::options::WriteStream(&out));
     request.setOpt(curlpp::options::NoSignal(true));
 
     try {
       request.perform();
     } catch (std::exception& e) {
-      spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
+      spdlog::error("Failed to load '{}'! Exception: '{}'", mRequest, e.what());
     }
 
     out.close();
 
     if (curlpp::infos::ResponseCode::get(request) == 400) {
       remove(cacheFile.c_str());
-    } else {
+    } // Load WMS texture and activate it if the texture is successfully downloaded.
+    else {
       mWMSTexture     = cs::graphics::TextureLoader::loadFromFile(cacheFile);
       mWMSTextureUsed = true;
     }
