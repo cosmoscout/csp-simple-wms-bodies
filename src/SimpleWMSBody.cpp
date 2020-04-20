@@ -71,14 +71,15 @@ void main()
 
 const std::string SimpleWMSBody::SPHERE_FRAG = R"(
 uniform vec3 uSunDirection;
-uniform sampler2D uSurfaceTexture;
-uniform sampler2D uSecondSurfaceTexture;
-uniform sampler2D uDefaultTexture;
+uniform sampler2D uBackgroundTexture;
+uniform sampler2D uWMSTexture;
+uniform sampler2D uSecondWMSTexture;
 uniform float uAmbientBrightness;
 uniform float uSunIlluminance;
 uniform float uFarClip;
 uniform float uFade;
-uniform bool uSecondTexture;
+uniform bool uUseTexture;
+uniform bool uUseSecondTexture;
 
 // inputs
 in vec2 vTexCoords;
@@ -98,16 +99,20 @@ vec3 SRGBtoLINEAR(vec3 srgbIn)
 
 void main()
 {
-    // WMS texture
-    vec4 texColor = texture(uSurfaceTexture, vTexCoords);
-    // Default planet surface texture
-    vec3 defColor = texture(uDefaultTexture, vTexCoords).rgb;
-    oColor = mix(defColor, texColor.rgb, texColor.a); 
-    // Fade texture in.
-    if(uSecondTexture) {
-      vec4 secColorA = texture(uSecondSurfaceTexture, vTexCoords);
-      vec3 secColor = mix(defColor, secColorA.rgb, secColorA.a);
-      oColor = mix(secColor, oColor, uFade);
+    vec3 backColor = texture(uBackgroundTexture, vTexCoords).rgb;
+    oColor = backColor;
+
+    if (uUseTexture) {
+      // WMS texture
+      vec4 texColor = texture(uWMSTexture, vTexCoords);
+      oColor = mix(oColor, texColor.rgb, texColor.a); 
+
+      // Fade second texture in.
+      if(uUseSecondTexture) {
+        vec4 secColorA = texture(uSecondWMSTexture, vTexCoords);
+        vec3 secColor = mix(backColor, secColorA.rgb, secColorA.a);
+        oColor = mix(secColor, oColor, uFade);
+      }
     }
 
     #ifdef ENABLE_HDR
@@ -137,14 +142,14 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
     , mGraphicsEngine(graphicsEngine)
     , mSolarSystem(solarSystem)
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
+    , mBackgroundTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
     , mWMSTexture(new VistaTexture(GL_TEXTURE_2D))
-    , mDefaultTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
-    , mOtherTexture(new VistaTexture(GL_TEXTURE_2D)) {
-  pVisibleRadius      = mRadii[0];
-  mTimeControl        = timeControl;
-  mProperties         = properties;
-  mWMSs               = tWms;
-  mDefaultTextureFile = sTexture;
+    , mSecondWMSTexture(new VistaTexture(GL_TEXTURE_2D)) {
+  pVisibleRadius         = mRadii[0];
+  mTimeControl           = timeControl;
+  mProperties            = properties;
+  mWMSs                  = tWms;
+  mBackgroundTextureFile = sTexture;
 
   setActiveWMS(mWMSs.at(0));
 
@@ -308,7 +313,7 @@ bool SimpleWMSBody::Do() {
         } else {
           fileError = true;
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
-              it->first, mTextureLoader.loadTextureFromFileAsync(mDefaultTextureFile)));
+              it->first, mTextureLoader.loadTextureFromFileAsync(mBackgroundTextureFile)));
         }
         mTextureFilesBuffer.erase(it);
       }
@@ -344,36 +349,34 @@ bool SimpleWMSBody::Do() {
     // Use Wms texture inside the interval.
     if (inInterval && !fileError) {
       if (mCurentTexture != timeString && iterator != mTextures.end()) {
-        mDefaultTextureUsed = false;
+        mWMSTextureUsed = true;
         mWMSTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, iterator->second, false);
-        mTexture       = mWMSTexture;
         mCurentTexture = timeString;
       }
       // Use default planet texture.
     } else {
-      mDefaultTextureUsed = true;
-      mTexture            = mDefaultTexture;
-      mCurentTexture      = utils::timeToString(mFormat.c_str(), startTime);
+      mWMSTextureUsed = false;
     }
 
-    if (mDefaultTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
-      mOtherTextureUsed = false;
+    if (!mWMSTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
+      mSecondWMSTextureUsed = false;
       // Create fading between Wms textures.
     } else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       auto it = mTextures.find(utils::timeToString(mFormat.c_str(), intervalAfter));
 
       if (it != mTextures.end()) {
-        if (mCurentOtherTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
-          mOtherTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, it->second, false);
-          mCurentOtherTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
-          mOtherTextureUsed   = true;
+        if (mCurentSecondTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
+          mSecondWMSTexture->UploadTexture(
+              mActiveWMS.mWidth, mActiveWMS.mHeight, it->second, false);
+          mCurentSecondTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
+          mSecondWMSTextureUsed = true;
         }
         mFade = static_cast<float>((double)(intervalAfter - time).total_seconds() /
                                    (double)(intervalAfter - startTime).total_seconds());
       }
     }
-  } 
+  }
 
   if (mShaderDirty) {
     mShader = VistaGLSLShader();
@@ -427,7 +430,8 @@ bool SimpleWMSBody::Do() {
       sunDirection[2]);
   mShader.SetUniform(mShader.GetUniformLocation("uSunIlluminance"), sunIlluminance);
   mShader.SetUniform(mShader.GetUniformLocation("uAmbientBrightness"), ambientBrightness);
-  mShader.SetUniform(mShader.GetUniformLocation("uSecondTexture"), mOtherTextureUsed);
+  mShader.SetUniform(mShader.GetUniformLocation("uUseTexture"), mWMSTextureUsed);
+  mShader.SetUniform(mShader.GetUniformLocation("uUseSecondTexture"), mSecondWMSTextureUsed);
 
   // Get modelview and projection matrices.
   GLfloat glMatMV[16], glMatP[16];
@@ -438,20 +442,23 @@ bool SimpleWMSBody::Do() {
       mShader.GetUniformLocation("uMatModelView"), 1, GL_FALSE, glm::value_ptr(matMV));
   glUniformMatrix4fv(mShader.GetUniformLocation("uMatProjection"), 1, GL_FALSE, glMatP);
 
-  mShader.SetUniform(mShader.GetUniformLocation("uSurfaceTexture"), 0);
-  mShader.SetUniform(mShader.GetUniformLocation("uDefaultTexture"), 1);
-  mShader.SetUniform(mShader.GetUniformLocation("uSecondSurfaceTexture"), 2);
+  mShader.SetUniform(mShader.GetUniformLocation("uBackgroundTexture"), 0);
+  mShader.SetUniform(mShader.GetUniformLocation("uWMSTexture"), 1);
+  mShader.SetUniform(mShader.GetUniformLocation("uSecondWMSTexture"), 2);
   mShader.SetUniform(
       mShader.GetUniformLocation("uRadii"), (float)mRadii[0], (float)mRadii[0], (float)mRadii[0]);
   mShader.SetUniform(
       mShader.GetUniformLocation("uFarClip"), cs::utils::getCurrentFarClipDistance());
 
-  if (mOtherTextureUsed) {
-    mShader.SetUniform(mShader.GetUniformLocation("uFade"), mFade);
-    mOtherTexture->Bind(GL_TEXTURE2);
+  mBackgroundTexture->Bind(GL_TEXTURE0);
+  if (mWMSTextureUsed) {
+    mWMSTexture->Bind(GL_TEXTURE1);
+
+    if (mSecondWMSTextureUsed) {
+      mShader.SetUniform(mShader.GetUniformLocation("uFade"), mFade);
+      mSecondWMSTexture->Bind(GL_TEXTURE2);
+    }
   }
-  mTexture->Bind(GL_TEXTURE0);
-  mDefaultTexture->Bind(GL_TEXTURE1);
 
   // Draw.
   mSphereVAO.Bind();
@@ -460,11 +467,14 @@ bool SimpleWMSBody::Do() {
   mSphereVAO.Release();
 
   // Clean up.
-  mTexture->Unbind(GL_TEXTURE0);
-  mDefaultTexture->Unbind(GL_TEXTURE1);
+  mBackgroundTexture->Unbind(GL_TEXTURE0);
 
-  if (mOtherTextureUsed) {
-    mOtherTexture->Unbind(GL_TEXTURE2);
+  if (mWMSTextureUsed) {
+    mWMSTexture->Unbind(GL_TEXTURE1);
+
+    if (mSecondWMSTextureUsed) {
+      mSecondWMSTexture->Unbind(GL_TEXTURE2);
+    }
   }
 
   mShader.Release();
@@ -496,10 +506,11 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   mTextureFilesBuffer.clear();
   mTexturesBuffer.clear();
   mTimeIntervals.clear();
-  mDefaultTextureUsed = true;
-  mOtherTextureUsed   = false;
-  mCurentTexture      = "";
-  mActiveWMS = wms;
+  mWMSTextureUsed       = false;
+  mSecondWMSTextureUsed = false;
+  mCurentTexture        = "";
+  mCurentSecondTexture  = "";
+  mActiveWMS            = wms;
 
   std::stringstream url;
   url << mActiveWMS.mUrl << "&WIDTH=" << mActiveWMS.mWidth << "&HEIGHT=" << mActiveWMS.mHeight
@@ -509,9 +520,8 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
 
   if (mActiveWMS.mTime.has_value()) {
     utils::parseIsoString(mActiveWMS.mTime.value(), mTimeIntervals);
-    mIntervalDuration   = mTimeIntervals.at(0).mIntervalDuration;
-    mFormat             = mTimeIntervals.at(0).mFormat;
-    mTexture            = mDefaultTexture;
+    mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
+    mFormat           = mTimeIntervals.at(0).mFormat;
   } else {
     std::ofstream out;
     std::string   cacheFile = "../share/resources/textures/" + mActiveWMS.mLayers + ".png";
@@ -536,9 +546,9 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
 
     if (curlpp::infos::ResponseCode::get(request) == 400) {
       remove(cacheFile.c_str());
-      mTexture = mDefaultTexture;
     } else {
-      mTexture = cs::graphics::TextureLoader::loadFromFile(cacheFile);
+      mWMSTexture     = cs::graphics::TextureLoader::loadFromFile(cacheFile);
+      mWMSTextureUsed = true;
     }
   }
 }

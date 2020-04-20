@@ -71,25 +71,35 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::vector<TimeInterval> getTimeIntervals();
 
  private:
-  std::shared_ptr<cs::core::GraphicsEngine> mGraphicsEngine;
-  std::shared_ptr<cs::core::SolarSystem>    mSolarSystem;
+  std::shared_ptr<cs::core::GraphicsEngine>         mGraphicsEngine;
+  std::shared_ptr<cs::core::SolarSystem>            mSolarSystem;
+  std::shared_ptr<const cs::scene::CelestialObject> mSun;
+  std::shared_ptr<cs::core::TimeControl>            mTimeControl;
+
+  glm::dvec3 mRadii;
 
   std::vector<WMSConfig> mWMSs;
   WMSConfig              mActiveWMS;
   std::mutex             mWMSMutex;
 
-  std::shared_ptr<VistaTexture> mTexture;
-  std::shared_ptr<VistaTexture> mWMSTexture;
-  std::shared_ptr<VistaTexture> mOtherTexture;
-  std::shared_ptr<VistaTexture> mDefaultTexture;
-  std::string                   mDefaultTextureFile;
-  int                           mDefTextWidth;
-  int                           mDefTextHeight;
-  std::string                   mRequest;
-  std::string                   mFormat;
-  int                           mIntervalDuration;
-  std::vector<TimeInterval>     mTimeIntervals;
-  bool                          mDefaultTextureUsed;
+  std::shared_ptr<VistaTexture> mBackgroundTexture; ///< The background texture of the body.
+  std::shared_ptr<VistaTexture> mWMSTexture;        ///< The WMS texture.
+  std::shared_ptr<VistaTexture> mSecondWMSTexture;  ///< Second WMS texture for time interpolation.
+  std::string                   mBackgroundTextureFile; ///< Local path to background texture.
+  bool                          mWMSTextureUsed;        ///< Whether to use the WMS texture.
+  bool        mSecondWMSTextureUsed = false;            ///< Whether to use the second WMS texture.
+  std::string mCurentTexture;                           ///< Timestep of the current WMS texture.
+  std::string mCurentSecondTexture;                     ///< Timestep of the second WMS texture.
+  float       mFade;                                    ///< Fading value between WMS textures.
+  std::string mRequest;
+  std::string mFormat;
+  int         mIntervalDuration;
+  std::vector<TimeInterval> mTimeIntervals;
+
+  std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
+  std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;
+  std::map<std::string, unsigned char*>              mTextures;
+  std::shared_ptr<Properties>                        mProperties;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;
@@ -98,28 +108,12 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
 
   WebMapTextureLoader mTextureLoader;
 
-  std::shared_ptr<const cs::scene::CelestialObject> mSun;
-  std::shared_ptr<cs::core::TimeControl>            mTimeControl;
-
-  glm::dvec3 mRadii;
-
   bool mShaderDirty              = true;
   int  mEnableLightingConnection = -1;
   int  mEnableHDRConnection      = -1;
 
   static const std::string SPHERE_VERT;
   static const std::string SPHERE_FRAG;
-
-  std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
-  std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;
-
-  std::map<std::string, unsigned char*> mTextures;
-  std::string                           mCurentTexture;
-  std::string                           mCurentOtherTexture;
-  bool                                  mOtherTextureBefore;
-  bool                                  mOtherTextureUsed = false;
-  float                                 mFade;
-  std::shared_ptr<Properties>           mProperties;
 
   boost::posix_time::ptime getStartTime(boost::posix_time::ptime time);
 };

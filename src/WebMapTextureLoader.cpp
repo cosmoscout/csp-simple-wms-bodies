@@ -50,13 +50,13 @@ std::string WebMapTextureLoader::loadTexture(
       spdlog::error("Failed to create cache directory: '{}'!", e.what());
     }
   }
-  
+
   requestStr += "&TIME=";
 
   requestStr += time;
   std::replace(time.begin(), time.end(), '/', '-');
   std::string cacheFile = cacheDir + time + ".png";
-  
+
   if (fileExist(cacheFile.c_str())) {
     return cacheFile;
   }
@@ -88,7 +88,7 @@ std::string WebMapTextureLoader::loadTexture(
     remove(cacheFile.c_str());
     return "Error";
   }
-  
+
   return cacheFile;
 }
 
