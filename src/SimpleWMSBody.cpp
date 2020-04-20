@@ -7,11 +7,14 @@
 #include "SimpleWMSBody.hpp"
 
 #include "../../../src/cs-core/GraphicsEngine.hpp"
+#include "../../../src/cs-core/SolarSystem.hpp"
+#include "../../../src/cs-core/TimeControl.hpp"
 #include "../../../src/cs-graphics/TextureLoader.hpp"
 #include "../../../src/cs-utils/FrameTimings.hpp"
 #include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/utils.hpp"
 
+#include <VistaOGLExt/VistaTexture.h>
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
 

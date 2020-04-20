@@ -10,17 +10,22 @@
 #include "WebMapTextureLoader.hpp"
 #include "utils.hpp"
 
-#include "../../../src/cs-core/SolarSystem.hpp"
-#include "../../../src/cs-core/TimeControl.hpp"
 #include "../../../src/cs-scene/CelestialBody.hpp"
 
 #include <VistaKernel/GraphicsManager/VistaOpenGLDraw.h>
 #include <VistaOGLExt/VistaBufferObject.h>
 #include <VistaOGLExt/VistaGLSLShader.h>
-#include <VistaOGLExt/VistaTexture.h>
 #include <VistaOGLExt/VistaVertexArrayObject.h>
 
 #include <glm/gtc/type_ptr.hpp>
+
+namespace cs::core {
+class SolarSystem;
+class TimeControl;
+class GraphicsEngine;
+} // namespace cs::core
+
+class VistaTexture;
 
 namespace csp::simplewmsbodies {
 
