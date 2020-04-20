@@ -41,6 +41,7 @@ std::string WebMapTextureLoader::loadTexture(
   std::getline(time_stringstream, year, '-');
   cacheDir += year + "/";
   auto cacheDirPath(boost::filesystem::absolute(boost::filesystem::path(cacheDir)));
+
   if (!(boost::filesystem::exists(cacheDirPath))) {
     try {
       cs::utils::filesystem::createDirectoryRecursively(
@@ -49,16 +50,20 @@ std::string WebMapTextureLoader::loadTexture(
       spdlog::error("Failed to create cache directory: '{}'!", e.what());
     }
   }
+  
   requestStr += "&TIME=";
 
   requestStr += time;
   std::replace(time.begin(), time.end(), '/', '-');
   std::string cacheFile = cacheDir + time + ".png";
+  
   if (fileExist(cacheFile.c_str())) {
     return cacheFile;
   }
+
   std::ofstream out;
   out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
+
   if (!out) {
     spdlog::error("Failed to open '{}' for writing!", cacheFile);
   }
@@ -67,6 +72,7 @@ std::string WebMapTextureLoader::loadTexture(
   request.setOpt(curlpp::options::Url(requestStr));
   request.setOpt(curlpp::options::WriteStream(&out));
   request.setOpt(curlpp::options::NoSignal(true));
+
   try {
     request.perform();
   } catch (std::exception& e) {
@@ -77,10 +83,12 @@ std::string WebMapTextureLoader::loadTexture(
   }
 
   out.close();
+
   if (curlpp::infos::ResponseCode::get(request) == 400) {
     remove(cacheFile.c_str());
     return "Error";
   }
+  
   return cacheFile;
 }
 
