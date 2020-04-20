@@ -268,6 +268,8 @@ bool SimpleWMSBody::Do() {
     boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
 
+    // Choose WMS textures to be downloaded. If no prefech is set, only sellect the texture for the
+    // current timestep.
     for (int preFetch = -mActiveWMS.mPrefetchCount.value_or(0);
          preFetch <= mActiveWMS.mPrefetchCount.value_or(0); preFetch++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
@@ -293,6 +295,7 @@ bool SimpleWMSBody::Do() {
       auto texture2 = mTexturesBuffer.find(timeString);
       auto texture3 = mTextures.find(timeString);
 
+      // Only load textures those aren't stored yet.
       if (texture1 == mTextureFilesBuffer.end() && texture2 == mTexturesBuffer.end() &&
           texture3 == mTextures.end() && inInterval) {
         // Load WMS texture to the disk.
