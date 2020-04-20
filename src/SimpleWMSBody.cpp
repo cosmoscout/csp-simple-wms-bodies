@@ -252,6 +252,7 @@ glm::dvec3 SimpleWMSBody::getRadii() const {
 
 bool SimpleWMSBody::Do() {
   std::lock_guard<std::mutex> guard(mWMSMutex);
+  
   if (!getIsInExistence() || !pVisible.get()) {
     return true;
   }
