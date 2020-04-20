@@ -252,7 +252,7 @@ glm::dvec3 SimpleWMSBody::getRadii() const {
 
 bool SimpleWMSBody::Do() {
   std::lock_guard<std::mutex> guard(mWMSMutex);
-  
+
   if (!getIsInExistence() || !pVisible.get()) {
     return true;
   }
@@ -373,7 +373,7 @@ bool SimpleWMSBody::Do() {
                                    (double)(intervalAfter - startTime).total_seconds());
       }
     }
-  }
+  } 
 
   if (mShaderDirty) {
     mShader = VistaGLSLShader();
@@ -495,7 +495,12 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   mTextures.clear();
   mTextureFilesBuffer.clear();
   mTexturesBuffer.clear();
+  mTimeIntervals.clear();
+  mDefaultTextureUsed = true;
+  mOtherTextureUsed   = false;
+  mCurentTexture      = "";
   mActiveWMS = wms;
+
   std::stringstream url;
   url << mActiveWMS.mUrl << "&WIDTH=" << mActiveWMS.mWidth << "&HEIGHT=" << mActiveWMS.mHeight
       << "&LAYERS=" << mActiveWMS.mLayers;
@@ -503,13 +508,10 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   std::string requestStr = mRequest;
 
   if (mActiveWMS.mTime.has_value()) {
-    mTimeIntervals.clear();
     utils::parseIsoString(mActiveWMS.mTime.value(), mTimeIntervals);
     mIntervalDuration   = mTimeIntervals.at(0).mIntervalDuration;
     mFormat             = mTimeIntervals.at(0).mFormat;
     mTexture            = mDefaultTexture;
-    mDefaultTextureUsed = true;
-    mCurentTexture      = "";
   } else {
     std::ofstream out;
     std::string   cacheFile = "../share/resources/textures/" + mActiveWMS.mLayers + ".png";
@@ -518,6 +520,7 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
     if (!out) {
       spdlog::error("Failed to open '{}' for writing!", cacheFile);
     }
+
     curlpp::Easy request;
     request.setOpt(curlpp::options::Url(requestStr));
     request.setOpt(curlpp::options::WriteStream(&out));
@@ -528,9 +531,15 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
     } catch (std::exception& e) {
       spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
     }
+
     out.close();
 
-    mTexture = cs::graphics::TextureLoader::loadFromFile(cacheFile);
+    if (curlpp::infos::ResponseCode::get(request) == 400) {
+      remove(cacheFile.c_str());
+      mTexture = mDefaultTexture;
+    } else {
+      mTexture = cs::graphics::TextureLoader::loadFromFile(cacheFile);
+    }
   }
 }
 
