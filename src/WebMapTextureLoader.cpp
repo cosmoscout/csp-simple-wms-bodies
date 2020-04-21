@@ -21,23 +21,33 @@
 
 namespace csp::simplewmsbodies {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 WebMapTextureLoader::WebMapTextureLoader()
     : mThreadPool(32) {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 WebMapTextureLoader::~WebMapTextureLoader() {
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool fileExist(const char* fileName) {
   std::ifstream infile(fileName);
   return infile.good();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::string WebMapTextureLoader::loadTexture(
     std::string time, std::string requestStr, std::string const& name, std::string const& format) {
   std::string       cacheDir = "../share/resources/textures/" + name + "/";
   std::string       year;
   std::stringstream time_stringstream(time);
+
+  // Create dir for year.
   std::getline(time_stringstream, year, '-');
   cacheDir += year + "/";
   auto cacheDirPath(boost::filesystem::absolute(boost::filesystem::path(cacheDir)));
@@ -57,10 +67,12 @@ std::string WebMapTextureLoader::loadTexture(
   std::replace(time.begin(), time.end(), '/', '-');
   std::string cacheFile = cacheDir + time + ".png";
 
+  // No need to download the file if it is already in cache.
   if (fileExist(cacheFile.c_str())) {
     return cacheFile;
   }
 
+  // Create cache file for write.
   std::ofstream out;
   out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
 
@@ -73,6 +85,7 @@ std::string WebMapTextureLoader::loadTexture(
   request.setOpt(curlpp::options::WriteStream(&out));
   request.setOpt(curlpp::options::NoSignal(true));
 
+  // Load to cache file.
   try {
     request.perform();
   } catch (std::exception& e) {
@@ -92,10 +105,14 @@ std::string WebMapTextureLoader::loadTexture(
   return cacheFile;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time,
     std::string requestStr, std::string const& centerName, std::string const& format) {
   return mThreadPool.enqueue([=]() { return loadTexture(time, requestStr, centerName, format); });
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::future<unsigned char*> WebMapTextureLoader::loadTextureFromFileAsync(
     std::string const& fileName) {
@@ -105,5 +122,7 @@ std::future<unsigned char*> WebMapTextureLoader::loadTextureFromFileAsync(
     return stbi_load(fileName.c_str(), &width, &height, &bpp, channels);
   });
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace csp::simplewmsbodies

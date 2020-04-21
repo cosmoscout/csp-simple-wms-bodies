@@ -21,12 +21,12 @@ This plugin can be enabled with the following configuration in your `settings.js
             {
               "name": <string>,       // The name of the data set as shown in the UI.
               "copyright": <string>,  // The copyright holder of the data set (also shown in the UI).
-              "url": <string>,        // The URL of the mapserver including the "SERVICE=wms" parameter.
+              "url": <string>,        // The URL of the map server including the "SERVICE=wms" parameter.
               "width": <int>,         // The width of the WMS image.
               "height": <int>,        // The height of the WMS image.
               "time": <string>,       // Time intervals of WMS images.
               "layers": <string>,     // A comma,separated list of WMS layers.
-              "preFetch": <int>       // The amount of textures that gets prefetched in every time direction.
+              "preFetch": <int>       // The amount of textures that gets pre-fetched in every time direction.
             },
             ... <more WMS datasets> ...
           ]

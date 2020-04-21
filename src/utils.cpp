@@ -11,6 +11,8 @@
 
 namespace csp::simplewmsbodies::utils {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::string timeToString(std::string const& format, boost::posix_time::ptime time) {
   std::stringstream sstr;
   auto              facet = new boost::posix_time::time_facet();
@@ -21,9 +23,12 @@ std::string timeToString(std::string const& format, boost::posix_time::ptime tim
   return sstr.str();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void matchDuration(std::string const& input, std::regex const& re, int& duration) {
   std::smatch match;
   std::regex_search(input, match, re);
+
   if (match.empty()) {
     spdlog::debug("Pattern does not match!");
     return;
@@ -32,7 +37,6 @@ void matchDuration(std::string const& input, std::regex const& re, int& duration
   std::vector<int> vec = {0, 0, 0, 0, 0, 0}; // years, months, days, hours, minutes, seconds
 
   for (size_t i = 1; i < match.size(); ++i) {
-
     if (match[i].matched) {
       std::string str = match[i];
       str.pop_back(); // remove last character.
@@ -53,10 +57,14 @@ void matchDuration(std::string const& input, std::regex const& re, int& duration
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void timeDuration(std::string const& isoString, int& duration, std::string& format) {
   std::regex rshort("^((?!T).)*$");
   duration = 0;
   format   = "";
+
+  // Check if isoString matches rshort.
   if (std::regex_match(isoString, rshort)) // no T (Time) exist
   {
     std::regex r("P([[:d:]]+Y)?([[:d:]]+M)?([[:d:]]+D)?");
@@ -67,6 +75,7 @@ void timeDuration(std::string const& isoString, int& duration, std::string& form
     matchDuration(isoString, r, duration);
   }
 
+  // Create string format based on interval duration (day / month / year / time).
   if (duration % 86400 == 0) {
     format = "%Y-%m-%d";
   } else if (duration % 2629744 == 0) {
@@ -78,39 +87,51 @@ void timeDuration(std::string const& isoString, int& duration, std::string& form
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void convertIsoDate(std::string& date, boost::posix_time::ptime& time) {
   if (date == "current") {
     time = boost::posix_time::microsec_clock::universal_time();
     return;
   }
+
   date.erase(
       std::remove_if(date.begin(), date.end(), [](unsigned char x) { return std::ispunct(x); }),
       date.end());
+
   std::string dateSubStr = date.substr(0, date.find("T"));
   std::size_t pos        = date.find("T");
   std::string timeSubStr = "T";
+
   if (pos != std::string::npos) {
     timeSubStr = date.substr(pos);
   }
+
   dateSubStr.resize(8, '0');
   timeSubStr.resize(7, '0');
   time = boost::posix_time::from_iso_string(dateSubStr + timeSubStr);
 }
 
-void parseIsoString(std::string const& isoString, std::vector<TimeInterval>& timeIntervals) {
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void parseIsoString(std::string const& isoString, std::vector<TimeInterval>& timeIntervals) {
   std::string       timeRange;
   std::stringstream iso_stringstream(isoString);
 
+  // Read time intervalls.
   while (std::getline(iso_stringstream, timeRange, ',')) {
     std::string       startDate, endDate, duration;
     std::stringstream timeRange_stringstream(timeRange);
+
     std::getline(timeRange_stringstream, startDate, '/');
     std::getline(timeRange_stringstream, endDate, '/');
     std::getline(timeRange_stringstream, duration, '/');
+
     TimeInterval             tmp;
     boost::posix_time::ptime start, end;
     convertIsoDate(startDate, start);
+
+    // If there is no end date, just a single timestep.
     if (endDate == "") {
       end                   = start;
       tmp.mIntervalDuration = 0;
@@ -126,11 +147,15 @@ void parseIsoString(std::string const& isoString, std::vector<TimeInterval>& tim
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool timeInIntervals(boost::posix_time::ptime time, std::vector<TimeInterval>& timeIntervals,
     boost::posix_time::time_duration& timeSinceStart, int& intervalDuration, std::string& format) {
+  // Check each interval whether the given time is inside or not..
   for (int i = 0; i < timeIntervals.size(); i++) {
     boost::posix_time::time_duration td =
         boost::posix_time::seconds(timeIntervals.at(i).mIntervalDuration);
+
     if (timeIntervals.at(i).mStartTime <= time && timeIntervals.at(i).mEndTime + td >= time) {
       timeSinceStart   = time - timeIntervals.at(i).mStartTime;
       intervalDuration = timeIntervals.at(i).mIntervalDuration;
@@ -138,7 +163,11 @@ bool timeInIntervals(boost::posix_time::ptime time, std::vector<TimeInterval>& t
       return true;
     }
   }
+
+  // Time is not in any of the intervals.
   return false;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace csp::simplewmsbodies::utils
