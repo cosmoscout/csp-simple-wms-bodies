@@ -14,7 +14,7 @@
 
 namespace csp::simplewmsbodies {
 
-/// Struct of timeintervalls of the data set
+/// Struct of timeintervals of the data set.
 struct TimeInterval {
   boost::posix_time::ptime mStartTime;
   boost::posix_time::ptime mEndTime;

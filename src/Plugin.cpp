@@ -125,8 +125,8 @@ void Plugin::init() {
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
         auto simpleWMSBody = std::dynamic_pointer_cast<SimpleWMSBody>(body);
 
-        // Remove time intervalls of the old body.
-        removeTimeIntervall(mIntervalsOnTimeline);
+        // Remove time intervals of the old body.
+        removeTimeInterval(mIntervalsOnTimeline);
 
         if (!simpleWMSBody) {
           return;
@@ -143,7 +143,7 @@ void Plugin::init() {
                 "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
 
             mIntervalsOnTimeline = simpleWMSBody->getTimeIntervals();
-            addTimeIntervall(mIntervalsOnTimeline, wms.mName, simpleWMSBody->getCenterName());
+            addTimeInterval(mIntervalsOnTimeline, wms.mName, simpleWMSBody->getCenterName());
           }
         }
       });
@@ -153,7 +153,7 @@ void Plugin::init() {
       std::function([this](std::string&& name) {
         auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
         if (body) {
-          removeTimeIntervall(mIntervalsOnTimeline);
+          removeTimeInterval(mIntervalsOnTimeline);
           body->setActiveWMS(name);
           auto wms = body->getActiveWMS();
 
@@ -161,7 +161,7 @@ void Plugin::init() {
               "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
 
           mIntervalsOnTimeline = body->getTimeIntervals();
-          addTimeIntervall(mIntervalsOnTimeline, name, body->getCenterName());
+          addTimeInterval(mIntervalsOnTimeline, name, body->getCenterName());
         }
       }));
 
@@ -170,7 +170,7 @@ void Plugin::init() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::removeTimeIntervall(std::vector<TimeInterval> timeIntervals) {
+void Plugin::removeTimeInterval(std::vector<TimeInterval> timeIntervals) {
   for (int i = 0; i < timeIntervals.size(); i++) {
     std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mStartTime);
     std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mEndTime);
@@ -184,7 +184,7 @@ void Plugin::removeTimeIntervall(std::vector<TimeInterval> timeIntervals) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::addTimeIntervall(
+void Plugin::addTimeInterval(
     std::vector<TimeInterval> timeIntervals, std::string wmsName, std::string planetName) {
   for (int i = 0; i < timeIntervals.size(); i++) {
     std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mStartTime);

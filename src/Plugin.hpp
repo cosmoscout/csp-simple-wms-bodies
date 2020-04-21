@@ -46,12 +46,12 @@ class Plugin : public cs::core::PluginBase {
 
   int mActiveBodyConnection = -1;
 
-  /// Add the time intervalls of the current data set to timeline.
-  void addTimeIntervall(
+  /// Add the time intervals of the current data set to timeline.
+  void addTimeInterval(
       std::vector<TimeInterval> timeIntervals, std::string wmsName, std::string planetName);
 
-  /// Remove the time intervalls of the current data set to timeline.
-  void removeTimeIntervall(std::vector<TimeInterval> timeIntervals);
+  /// Remove the time intervals of the current data set to timeline.
+  void removeTimeInterval(std::vector<TimeInterval> timeIntervals);
 };
 
 } // namespace csp::simplewmsbodies
