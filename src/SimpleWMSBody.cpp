@@ -367,7 +367,7 @@ bool SimpleWMSBody::Do() {
 
     if (!mWMSTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
       mSecondWMSTextureUsed = false;
-      mCurentSecondTexture = "";
+      mCurentSecondTexture  = "";
     } // Create fading between Wms textures when interpolation is enabled.
     else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);

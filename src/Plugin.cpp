@@ -85,7 +85,8 @@ void Plugin::init() {
       "WMS", "panorama", "../share/resources/gui/wms_settings.html");
   mGuiManager->addScriptToGuiFromJS("../share/resources/gui/js/csp-simple-wms-bodies.js");
 
-  // Set whether to interpolate textures between timesteps.
+  // Set whether to interpolate textures between timesteps (does not work when pre-fetch is
+  // inactive).
   mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableTimeInterpolation",
       "Enables or disables interpolation.",
       std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
