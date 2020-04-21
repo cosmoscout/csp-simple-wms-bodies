@@ -22,11 +22,6 @@ namespace csp::simplewmsbodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const uint32_t GRID_RESOLUTION_X = 200;
-const uint32_t GRID_RESOLUTION_Y = 100;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 const std::string SimpleWMSBody::SPHERE_VERT = R"(
 uniform vec3 uSunDirection;
 uniform vec3 uRadii;
@@ -137,14 +132,17 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
     std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
     std::string sTexture, std::string const& sFrameName, double tStartExistence,
     double tEndExistence, std::vector<WMSConfig> tWms,
-    std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties)
+    std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties,
+    int iGridResolutionX, int iGridResolutionY)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
     , mGraphicsEngine(graphicsEngine)
     , mSolarSystem(solarSystem)
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
     , mBackgroundTexture(cs::graphics::TextureLoader::loadFromFile(sTexture))
     , mWMSTexture(new VistaTexture(GL_TEXTURE_2D))
-    , mSecondWMSTexture(new VistaTexture(GL_TEXTURE_2D)) {
+    , mSecondWMSTexture(new VistaTexture(GL_TEXTURE_2D))
+    , mGridResolutionX(iGridResolutionX)
+    , mGridResolutionY(iGridResolutionY) {
   pVisibleRadius         = mRadii[0];
   mTimeControl           = timeControl;
   mProperties            = properties;
@@ -155,23 +153,23 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
 
   // For rendering the sphere, we create a 2D-grid which is warped into a sphere in the vertex
   // shader. The vertex positions are directly used as texture coordinates.
-  std::vector<float>    vertices(GRID_RESOLUTION_X * GRID_RESOLUTION_Y * 2);
-  std::vector<unsigned> indices((GRID_RESOLUTION_X - 1) * (2 + 2 * GRID_RESOLUTION_Y));
+  std::vector<float>    vertices(mGridResolutionX * mGridResolutionY * 2);
+  std::vector<unsigned> indices((mGridResolutionX - 1) * (2 + 2 * mGridResolutionY));
 
-  for (uint32_t x = 0; x < GRID_RESOLUTION_X; ++x) {
-    for (uint32_t y = 0; y < GRID_RESOLUTION_Y; ++y) {
-      vertices[(x * GRID_RESOLUTION_Y + y) * 2 + 0] = 1.f / (GRID_RESOLUTION_X - 1) * x;
-      vertices[(x * GRID_RESOLUTION_Y + y) * 2 + 1] = 1.f / (GRID_RESOLUTION_Y - 1) * y;
+  for (uint32_t x = 0; x < mGridResolutionX; ++x) {
+    for (uint32_t y = 0; y < mGridResolutionY; ++y) {
+      vertices[(x * mGridResolutionY + y) * 2 + 0] = 1.f / (mGridResolutionX - 1) * x;
+      vertices[(x * mGridResolutionY + y) * 2 + 1] = 1.f / (mGridResolutionY - 1) * y;
     }
   }
 
   uint32_t index = 0;
 
-  for (uint32_t x = 0; x < GRID_RESOLUTION_X - 1; ++x) {
-    indices[index++] = x * GRID_RESOLUTION_Y;
-    for (uint32_t y = 0; y < GRID_RESOLUTION_Y; ++y) {
-      indices[index++] = x * GRID_RESOLUTION_Y + y;
-      indices[index++] = (x + 1) * GRID_RESOLUTION_Y + y;
+  for (uint32_t x = 0; x < mGridResolutionX - 1; ++x) {
+    indices[index++] = x * mGridResolutionY;
+    for (uint32_t y = 0; y < mGridResolutionY; ++y) {
+      indices[index++] = x * mGridResolutionY + y;
+      indices[index++] = (x + 1) * mGridResolutionY + y;
     }
     indices[index] = indices[index - 1];
     ++index;
@@ -474,7 +472,7 @@ bool SimpleWMSBody::Do() {
 
   // Draw.
   mSphereVAO.Bind();
-  glDrawElements(GL_TRIANGLE_STRIP, (GRID_RESOLUTION_X - 1) * (2 + 2 * GRID_RESOLUTION_Y),
+  glDrawElements(GL_TRIANGLE_STRIP, (mGridResolutionX - 1) * (2 + 2 * mGridResolutionY),
       GL_UNSIGNED_INT, nullptr);
   mSphereVAO.Release();
 

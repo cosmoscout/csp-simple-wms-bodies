@@ -14,6 +14,8 @@ This plugin can be enabled with the following configuration in your `settings.js
     "csp-simple-wms-bodies": {
       "bodies": {
         <anchor name>: {
+          "gridResolutionX": <int>,   // The x resolution of the body grid.
+          "gridResolutionY": <int>,   // The y resolution of the body grid.
           "texture": <string>,        // The path to background surface texture. The texture from the WMS image will be overlaid.
           "wms": [
             {

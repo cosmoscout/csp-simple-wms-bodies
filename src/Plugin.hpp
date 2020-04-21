@@ -25,8 +25,10 @@ class Plugin : public cs::core::PluginBase {
 
     /// The startup settings for a planet.
     struct Body {
-      std::vector<WMSConfig> mWMS;     ///< The data sets containing WMS data.
-      std::string            mTexture; ///< The path to surface texture.
+      std::vector<WMSConfig> mWMS;             ///< The data sets containing WMS data.
+      std::string            mTexture;         ///< The path to surface texture.
+      int                    mGridResolutionX; ///< The x resolution of the body grid.
+      int                    mGridResolutionY; ///< The y resolution of the body gird.
     };
 
     std::map<std::string, Body> mBodies;

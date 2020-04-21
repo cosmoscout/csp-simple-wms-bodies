@@ -43,7 +43,8 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
       std::string sTexture, std::string const& sFrameName, double tStartExistence,
       double tEndExistence, std::vector<WMSConfig> tWms,
       std::shared_ptr<cs::core::TimeControl> timeControl,
-      std::shared_ptr<Properties>            properties = nullptr);
+      std::shared_ptr<Properties> properties = nullptr, int iGridResolutionX = 200,
+      int iGridResolutionY = 100);
   ~SimpleWMSBody() override;
 
   /// The sun object is used for lighting computation.
@@ -112,6 +113,9 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool mShaderDirty              = true;
   int  mEnableLightingConnection = -1;
   int  mEnableHDRConnection      = -1;
+
+  uint32_t mGridResolutionX;
+  uint32_t mGridResolutionY;
 
   static const std::string SPHERE_VERT;
   static const std::string SPHERE_FRAG;

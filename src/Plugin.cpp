@@ -51,8 +51,10 @@ void from_json(const nlohmann::json& j, WMSConfig& o) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
-  o.mWMS     = cs::core::parseVector<WMSConfig>("wms", j);
-  o.mTexture = cs::core::parseProperty<std::string>("texture", j);
+  o.mWMS             = cs::core::parseVector<WMSConfig>("wms", j);
+  o.mTexture         = cs::core::parseProperty<std::string>("texture", j);
+  o.mGridResolutionX = cs::core::parseProperty<int>("gridResolutionX", j);
+  o.mGridResolutionY = cs::core::parseProperty<int>("gridResolutionY", j);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -107,7 +109,8 @@ void Plugin::init() {
 
     auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem,
         anchor->second.mCenter, bodySettings.second.mTexture, anchor->second.mFrame,
-        tStartExistence, tEndExistence, bodySettings.second.mWMS, mTimeControl, mProperties);
+        tStartExistence, tEndExistence, bodySettings.second.mWMS, mTimeControl, mProperties,
+        bodySettings.second.mGridResolutionX, bodySettings.second.mGridResolutionY);
 
     mSolarSystem->registerBody(body);
     mInputManager->registerSelectable(body);
