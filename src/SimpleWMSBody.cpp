@@ -268,8 +268,8 @@ bool SimpleWMSBody::Do() {
     boost::posix_time::ptime time =
         cs::utils::convert::toBoostTime(mTimeControl->pSimulationTime.get());
 
-    // Choose WMS textures to be downloaded. If no prefech is set, only sellect the texture for the
-    // current timestep.
+    // Select WMS textures to be downloaded. If no pre-fetch is set, only sellect the texture for
+    // the current timestep.
     for (int preFetch = -mActiveWMS.mPrefetchCount.value_or(0);
          preFetch <= mActiveWMS.mPrefetchCount.value_or(0); preFetch++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
@@ -285,12 +285,14 @@ bool SimpleWMSBody::Do() {
       }
       std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
 
+      // Select a WMS texture over the period of timeDuration if timespan is enabled.
       if (mProperties->mEnableTimespan.get()) {
         boost::posix_time::time_duration timeDuration =
             boost::posix_time::seconds(mIntervalDuration);
         boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
         timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
       }
+
       auto texture1 = mTextureFilesBuffer.find(timeString);
       auto texture2 = mTexturesBuffer.find(timeString);
       auto texture3 = mTextures.find(timeString);

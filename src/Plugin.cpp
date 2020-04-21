@@ -88,7 +88,7 @@ void Plugin::init() {
       "Enables or disables interpolation.",
       std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
 
-  // Set whether to display the entire timespan.
+  // Set whether to display timespan.
   mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableTimeSpan",
       "Enables or disables timespan.",
       std::function([this](bool enable) { mProperties->mEnableTimespan = enable; }));
