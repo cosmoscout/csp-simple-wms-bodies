@@ -321,9 +321,6 @@ bool SimpleWMSBody::Do() {
               fileIt->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
         } else {
           fileError = true;
-          // Load background texture instead.
-          mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
-              fileIt->first, mTextureLoader.loadTextureFromFileAsync(mBackgroundTextureFile)));
         }
 
         fileIt = mTextureFilesBuffer.erase(fileIt);
