@@ -90,8 +90,8 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::string                   mBackgroundTextureFile; ///< Local path to background texture.
   bool                          mWMSTextureUsed;        ///< Whether to use the WMS texture.
   bool        mSecondWMSTextureUsed = false;            ///< Whether to use the second WMS texture.
-  std::string mCurentTexture;                           ///< Timestep of the current WMS texture.
-  std::string mCurentSecondTexture;                     ///< Timestep of the second WMS texture.
+  std::string mCurrentTexture;                          ///< Timestep of the current WMS texture.
+  std::string mCurrentSecondTexture;                    ///< Timestep of the second WMS texture.
   float       mFade;                                    ///< Fading value between WMS textures.
   std::string mRequest;                                 ///< WMS server request URL.
   std::string mFormat;                                  ///< Time format style.

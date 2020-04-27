@@ -362,10 +362,10 @@ bool SimpleWMSBody::Do() {
     // Use Wms texture inside the interval.
     if (inInterval && !fileError) {
       // Only update if we have a new texture.
-      if (mCurentTexture != timeString && tex != mTextures.end()) {
+      if (mCurrentTexture != timeString && tex != mTextures.end()) {
         mWMSTextureUsed = true;
         mWMSTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, tex->second, false);
-        mCurentTexture = timeString;
+        mCurrentTexture = timeString;
       }
     } // Use default planet texture instead.
     else {
@@ -374,7 +374,7 @@ bool SimpleWMSBody::Do() {
 
     if (!mWMSTextureUsed || !mProperties->mEnableInterpolation.get() || mIntervalDuration == 0) {
       mSecondWMSTextureUsed = false;
-      mCurentSecondTexture  = "";
+      mCurrentSecondTexture = "";
     } // Create fading between Wms textures when interpolation is enabled.
     else {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
@@ -382,10 +382,10 @@ bool SimpleWMSBody::Do() {
 
       if (tex != mTextures.end()) {
         // Only update if we ha a new second texture.
-        if (mCurentSecondTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
+        if (mCurrentSecondTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
           mSecondWMSTexture->UploadTexture(
               mActiveWMS.mWidth, mActiveWMS.mHeight, tex->second, false);
-          mCurentSecondTexture  = utils::timeToString(mFormat.c_str(), intervalAfter);
+          mCurrentSecondTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
           mSecondWMSTextureUsed = true;
         }
         // Interpolate fade value between the 2 WMS textures.
@@ -526,8 +526,8 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   mTimeIntervals.clear();
   mWMSTextureUsed       = false;
   mSecondWMSTextureUsed = false;
-  mCurentTexture        = "";
-  mCurentSecondTexture  = "";
+  mCurrentTexture       = "";
+  mCurrentSecondTexture = "";
   mActiveWMS            = wms;
 
   // Create request URL for map server.
