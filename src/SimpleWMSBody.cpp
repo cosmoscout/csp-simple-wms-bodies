@@ -302,9 +302,8 @@ bool SimpleWMSBody::Do() {
       if (texture1 == mTextureFilesBuffer.end() && texture2 == mTexturesBuffer.end() &&
           texture3 == mTextures.end() && inInterval) {
         // Load WMS texture to the disk.
-        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(
-            timeString, mTextureLoader.loadTextureAsync(
-                            timeString, mRequest, mActiveWMS.mLayers, mFormat, mCache)));
+        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
+            mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWMS.mLayers, mCache)));
       }
     }
 
@@ -545,33 +544,10 @@ void SimpleWMSBody::setActiveWMS(Plugin::Settings::WMSConfig const& wms) {
     utils::parseIsoString(mActiveWMS.mTime.value(), mTimeIntervals);
     mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
     mFormat           = mTimeIntervals.at(0).mFormat;
-  } // Download WMS texture.
+  } // Download WMS texture without timestep.
   else {
-    std::ofstream out;
-    std::string   cacheFile = mCache + mActiveWMS.mLayers + "/" + mActiveWMS.mLayers + ".png";
-    out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
-
-    if (!out) {
-      spdlog::error("Failed to open '{}' for writing!", cacheFile);
-    }
-
-    curlpp::Easy request;
-    request.setOpt(curlpp::options::Url(mRequest));
-    request.setOpt(curlpp::options::WriteStream(&out));
-    request.setOpt(curlpp::options::NoSignal(true));
-
-    try {
-      request.perform();
-    } catch (std::exception& e) {
-      spdlog::error("Failed to load '{}'! Exception: '{}'", mRequest, e.what());
-    }
-
-    out.close();
-
-    if (curlpp::infos::ResponseCode::get(request) == 400) {
-      remove(cacheFile.c_str());
-    } // Load WMS texture and activate it if the texture is successfully downloaded.
-    else {
+    std::string cacheFile = mTextureLoader.loadTexture("", mRequest, mActiveWMS.mLayers, mCache);
+    if (cacheFile != "Error") {
       mWMSTexture     = cs::graphics::TextureLoader::loadFromFile(cacheFile);
       mWMSTextureUsed = true;
     }

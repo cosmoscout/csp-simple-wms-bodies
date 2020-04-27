@@ -41,14 +41,19 @@ bool fileExist(const char* fileName) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::string WebMapTextureLoader::loadTexture(std::string time, std::string requestStr,
-    std::string const& name, std::string const& format, std::string const& mapCache) {
-  std::string       cacheDir = mapCache + name + "/";
-  std::string       year;
-  std::stringstream time_stringstream(time);
+    std::string const& layer, std::string const& mapCache) {
+  std::string cacheDir = mapCache + layer + "/";
 
-  // Create dir for year.
-  std::getline(time_stringstream, year, '-');
-  cacheDir += year + "/";
+  // Add year subdirectory, if time is specified.
+  if (time != "") {
+    std::string       year;
+    std::stringstream time_stringstream(time);
+
+    // Create dir for year.
+    std::getline(time_stringstream, year, '-');
+    cacheDir += year + "/";
+  }
+
   auto cacheDirPath(boost::filesystem::absolute(boost::filesystem::path(cacheDir)));
 
   if (!(boost::filesystem::exists(cacheDirPath))) {
@@ -57,14 +62,22 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
           cacheDirPath, boost::filesystem::perms::all_all);
     } catch (std::exception& e) {
       spdlog::error("Failed to create cache directory: '{}'!", e.what());
+      return "Error";
     }
   }
 
-  requestStr += "&TIME=";
+  std::string cacheFile;
 
-  requestStr += time;
-  std::replace(time.begin(), time.end(), '/', '-');
-  std::string cacheFile = cacheDir + time + ".png";
+  // Add time string to map server request if time is specified
+  if (time != "") {
+    requestStr += "&TIME=";
+
+    requestStr += time;
+    std::replace(time.begin(), time.end(), '/', '-');
+    cacheFile = cacheDir + time + ".png";
+  } else {
+    cacheFile = cacheDir + layer + ".png";
+  }
 
   // No need to download the file if it is already in cache.
   if (fileExist(cacheFile.c_str())) {
@@ -77,6 +90,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
 
   if (!out) {
     spdlog::error("Failed to open '{}' for writing!", cacheFile);
+    return "Error";
   }
 
   curlpp::Easy request;
@@ -107,10 +121,8 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time,
-    std::string requestStr, std::string const& centerName, std::string const& format,
-    std::string const& mapCache) {
-  return mThreadPool.enqueue(
-      [=]() { return loadTexture(time, requestStr, centerName, format, mapCache); });
+    std::string requestStr, std::string const& layer, std::string const& mapCache) {
+  return mThreadPool.enqueue([=]() { return loadTexture(time, requestStr, layer, mapCache); });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
