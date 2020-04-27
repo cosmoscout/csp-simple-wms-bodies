@@ -307,29 +307,36 @@ bool SimpleWMSBody::Do() {
     bool fileError = false;
 
     // Check whether the WMS textures are loaded to the disk.
-    for (auto tex = mTextureFilesBuffer.begin(); tex != mTextureFilesBuffer.end(); ++tex) {
-      if (tex->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        std::string fileName = tex->second.get();
+    auto fileIt = mTextureFilesBuffer.begin();
+    while (fileIt != mTextureFilesBuffer.end()) {
+      if (fileIt->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        std::string fileName = fileIt->second.get();
 
         if (fileName != "Error") {
           // Load WMS texture to memory
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
-              tex->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
+              fileIt->first, mTextureLoader.loadTextureFromFileAsync(fileName)));
         } else {
           fileError = true;
           // Load background texture instead.
           mTexturesBuffer.insert(std::pair<std::string, std::future<unsigned char*>>(
-              tex->first, mTextureLoader.loadTextureFromFileAsync(mBackgroundTextureFile)));
+              fileIt->first, mTextureLoader.loadTextureFromFileAsync(mBackgroundTextureFile)));
         }
-        mTextureFilesBuffer.erase(tex);
+
+        fileIt = mTextureFilesBuffer.erase(fileIt);
+      } else {
+        ++fileIt;
       }
     }
 
     // Check whether the WMS textures are loaded to the memory.
-    for (auto tex = mTexturesBuffer.begin(); tex != mTexturesBuffer.end(); ++tex) {
-      if (tex->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
-        mTextures.insert(std::pair<std::string, unsigned char*>(tex->first, tex->second.get()));
-        mTexturesBuffer.erase(tex);
+    auto texIt = mTexturesBuffer.begin();
+    while (texIt != mTexturesBuffer.end()) {
+      if (texIt->second.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+        mTextures.insert(std::pair<std::string, unsigned char*>(texIt->first, texIt->second.get()));
+        texIt = mTexturesBuffer.erase(texIt);
+      } else {
+        ++texIt;
       }
     }
 
