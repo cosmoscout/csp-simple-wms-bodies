@@ -7,6 +7,7 @@
 #ifndef CSP_WMS_SIMPLE_BODIES_HPP
 #define CSP_WMS_SIMPLE_BODIES_HPP
 
+#include "Plugin.hpp"
 #include "WebMapTextureLoader.hpp"
 #include "utils.hpp"
 
@@ -29,22 +30,17 @@ class VistaTexture;
 
 namespace csp::simplewmsbodies {
 
-struct Properties {
-  cs::utils::Property<bool> mEnableInterpolation = true;
-  cs::utils::Property<bool> mEnableTimespan      = false;
-};
-
 /// This is just a sphere with a background texture overlaid with WMS based textures, attached to
 /// the given SPICE frame. All of the textures should be in equirectangular projection.
 class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
   SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
-      std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
-      std::string sTexture, std::string const& sFrameName, double tStartExistence,
-      double tEndExistence, std::vector<WMSConfig> tWms,
-      std::shared_ptr<cs::core::TimeControl> timeControl,
-      std::shared_ptr<Properties> properties = nullptr, int iGridResolutionX = 200,
-      int iGridResolutionY = 100);
+      std::shared_ptr<cs::core::SolarSystem> const&              solarSystem,
+      std::shared_ptr<Plugin::Properties>                        properties,
+      std::shared_ptr<cs::core::TimeControl> timeControl, std::string sTexture,
+      std::string const& sCenterName, std::string const& sFrameName, std::string const& mapCache,
+      std::vector<Plugin::Settings::WMSConfig> tWms, double tStartExistence, double tEndExistence,
+      int iGridResolutionX = 200, int iGridResolutionY = 100);
   ~SimpleWMSBody() override;
 
   /// The sun object is used for lighting computation.
@@ -64,12 +60,12 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool GetBoundingBox(VistaBoundingBox& bb) override;
 
   /// Getter for the WMS configs of the active body.
-  std::vector<WMSConfig> const& getWMSs();
+  std::vector<Plugin::Settings::WMSConfig> const& getWMSs();
 
   /// Setter and getter for the active WMS data set.
-  void             setActiveWMS(WMSConfig const& wms);
-  void             setActiveWMS(std::string const& wms);
-  WMSConfig const& getActiveWMS();
+  void                               setActiveWMS(Plugin::Settings::WMSConfig const& wms);
+  void                               setActiveWMS(std::string const& wms);
+  Plugin::Settings::WMSConfig const& getActiveWMS();
 
   std::vector<TimeInterval> getTimeIntervals();
 
@@ -82,11 +78,11 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   glm::dvec3 mRadii;
   std::mutex mWMSMutex;
 
-  std::vector<WMSConfig>        mWMSs;              ///< WMS configs of the active body.
-  WMSConfig                     mActiveWMS;         ///< WMS config of the active WMS data set.
-  std::shared_ptr<VistaTexture> mBackgroundTexture; ///< The background texture of the body.
-  std::shared_ptr<VistaTexture> mWMSTexture;        ///< The WMS texture.
-  std::shared_ptr<VistaTexture> mSecondWMSTexture;  ///< Second WMS texture for time interpolation.
+  std::vector<Plugin::Settings::WMSConfig> mWMSs;      ///< WMS configs of the active body.
+  Plugin::Settings::WMSConfig              mActiveWMS; ///< WMS config of the active WMS data set.
+  std::shared_ptr<VistaTexture> mBackgroundTexture;    ///< The background texture of the body.
+  std::shared_ptr<VistaTexture> mWMSTexture;           ///< The WMS texture.
+  std::shared_ptr<VistaTexture> mSecondWMSTexture; ///< Second WMS texture for time interpolation.
   std::string                   mBackgroundTextureFile; ///< Local path to background texture.
   bool                          mWMSTextureUsed;        ///< Whether to use the WMS texture.
   bool        mSecondWMSTextureUsed = false;            ///< Whether to use the second WMS texture.
@@ -97,11 +93,12 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::string mFormat;                                  ///< Time format style.
   int         mIntervalDuration;                        ///< Duration of the current time interval.
   std::vector<TimeInterval> mTimeIntervals;             ///< Time intervals of data set.
+  std::string               mCache = "cache/texture";   ///< Cache directory of downloaded textures.
 
   std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
   std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;
   std::map<std::string, unsigned char*>              mTextures;
-  std::shared_ptr<Properties>                        mProperties;
+  std::shared_ptr<Plugin::Properties>                mProperties;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;

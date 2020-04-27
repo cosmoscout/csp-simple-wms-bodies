@@ -6,8 +6,7 @@
 
 #include "WebMapTextureLoader.hpp"
 
-#include "utils.hpp"
-
+#include "../../../src/cs-utils/convert.hpp"
 #include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/logger.hpp"
 
@@ -41,9 +40,9 @@ bool fileExist(const char* fileName) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::string WebMapTextureLoader::loadTexture(
-    std::string time, std::string requestStr, std::string const& name, std::string const& format) {
-  std::string       cacheDir = "../share/resources/textures/" + name + "/";
+std::string WebMapTextureLoader::loadTexture(std::string time, std::string requestStr,
+    std::string const& name, std::string const& format, std::string const& mapCache) {
+  std::string       cacheDir = mapCache + name + "/";
   std::string       year;
   std::stringstream time_stringstream(time);
 
@@ -108,8 +107,10 @@ std::string WebMapTextureLoader::loadTexture(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::future<std::string> WebMapTextureLoader::loadTextureAsync(std::string time,
-    std::string requestStr, std::string const& centerName, std::string const& format) {
-  return mThreadPool.enqueue([=]() { return loadTexture(time, requestStr, centerName, format); });
+    std::string requestStr, std::string const& centerName, std::string const& format,
+    std::string const& mapCache) {
+  return mThreadPool.enqueue(
+      [=]() { return loadTexture(time, requestStr, centerName, format, mapCache); });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

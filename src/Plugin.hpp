@@ -7,21 +7,42 @@
 #ifndef CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 #define CSP_SIMPLE_WMS_BODIES_PLUGIN_HPP
 
-#include "SimpleWMSBody.hpp"
+#include "utils.hpp"
 
 #include "../../../src/cs-core/PluginBase.hpp"
+#include "../../../src/cs-utils/Property.hpp"
 
 #include <VistaKernel/GraphicsManager/VistaOpenGLNode.h>
 
 namespace csp::simplewmsbodies {
+
+class SimpleWMSBody;
 
 /// This plugin provides the rendering of planets as spheres with a texture and an additional WMS
 /// based texture. Despite its name it can also render moons :P. It can be configured via the
 /// applications config file. See README.md for details.
 class Plugin : public cs::core::PluginBase {
  public:
+  struct Properties {
+    cs::utils::Property<bool> mEnableInterpolation = true;
+    cs::utils::Property<bool> mEnableTimespan      = false;
+  };
+
   /// The startup settings of the plugin.
   struct Settings {
+
+    /// A single WMS data set.
+    struct WMSConfig {
+      std::string mName;      ///< The name of the data set as shown in the UI.
+      std::string mCopyright; ///< The copyright holder of the data set (also shown in the UI).
+      std::string mUrl;       ///< The URL of the map server including the "SERVICE=wms" parameter.
+      int         mWidth;     ///< The width of the WMS image.
+      int         mHeight;    ///< The height of the WMS image.
+      std::optional<std::string> mTime;   ///< Time intervals of WMS images.
+      std::string                mLayers; ///< A comma,seperated list of WMS layers.
+      std::optional<int>
+          mPrefetchCount; ///< The amount of textures that gets pre-fetched in every time direction.
+    };
 
     /// The startup settings for a planet.
     struct Body {
@@ -31,7 +52,8 @@ class Plugin : public cs::core::PluginBase {
       int                    mGridResolutionY; ///< The y resolution of the body gird.
     };
 
-    std::map<std::string, Body> mBodies;
+    std::string                 mMapCache; ///< Path to the map cache folder.
+    std::map<std::string, Body> mBodies;   ///< A list of planets with their anchor names.
   };
 
   Plugin();

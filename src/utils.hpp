@@ -22,19 +22,6 @@ struct TimeInterval {
   int                      mIntervalDuration; ///< The duration of the interval in seconds.
 };
 
-/// A single WMS data set.
-struct WMSConfig {
-  std::string mName;      ///< The name of the data set as shown in the UI.
-  std::string mCopyright; ///< The copyright holder of the data set (also shown in the UI).
-  std::string mUrl;       ///< The URL of the map server including the "SERVICE=wms" parameter.
-  int         mWidth;     ///< The width of the WMS image.
-  int         mHeight;    ///< The height of the WMS image.
-  std::optional<std::string> mTime; ///< Time intervals of WMS images.
-  std::optional<int>
-              mPrefetchCount; ///< The amount of textures that gets pre-fetched in every time direction.
-  std::string mLayers;        ///< A comma,seperated list of WMS layers.
-};
-
 namespace utils {
 
 /// Create formatted date, time string from time value.

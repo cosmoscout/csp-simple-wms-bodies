@@ -5,6 +5,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "SimpleWMSBody.hpp"
+#include "Plugin.hpp"
 
 #include "../../../src/cs-core/GraphicsEngine.hpp"
 #include "../../../src/cs-core/SolarSystem.hpp"
@@ -129,10 +130,11 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& graphicsEngine,
-    std::shared_ptr<cs::core::SolarSystem> const& solarSystem, std::string const& sCenterName,
-    std::string sTexture, std::string const& sFrameName, double tStartExistence,
-    double tEndExistence, std::vector<WMSConfig> tWms,
-    std::shared_ptr<cs::core::TimeControl> timeControl, std::shared_ptr<Properties> properties,
+    std::shared_ptr<cs::core::SolarSystem> const&                             solarSystem,
+    std::shared_ptr<Plugin::Properties>                                       properties,
+    std::shared_ptr<cs::core::TimeControl> timeControl, std::string sTexture,
+    std::string const& sCenterName, std::string const& sFrameName, std::string const& mapCache,
+    std::vector<Plugin::Settings::WMSConfig> tWms, double tStartExistence, double tEndExistence,
     int iGridResolutionX, int iGridResolutionY)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
     , mGraphicsEngine(graphicsEngine)
@@ -148,6 +150,7 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::GraphicsEngine> const& gr
   mProperties            = properties;
   mWMSs                  = tWms;
   mBackgroundTextureFile = sTexture;
+  mCache                 = mapCache;
 
   setActiveWMS(mWMSs.at(0));
 
@@ -299,8 +302,9 @@ bool SimpleWMSBody::Do() {
       if (texture1 == mTextureFilesBuffer.end() && texture2 == mTexturesBuffer.end() &&
           texture3 == mTextures.end() && inInterval) {
         // Load WMS texture to the disk.
-        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
-            mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWMS.mLayers, mFormat)));
+        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(
+            timeString, mTextureLoader.loadTextureAsync(
+                            timeString, mRequest, mActiveWMS.mLayers, mFormat, mCache)));
       }
     }
 
@@ -519,7 +523,7 @@ boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime ti
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
+void SimpleWMSBody::setActiveWMS(Plugin::Settings::WMSConfig const& wms) {
   mTextures.clear();
   mTextureFilesBuffer.clear();
   mTexturesBuffer.clear();
@@ -544,7 +548,7 @@ void SimpleWMSBody::setActiveWMS(WMSConfig const& wms) {
   } // Download WMS texture.
   else {
     std::ofstream out;
-    std::string   cacheFile = "../share/resources/textures/" + mActiveWMS.mLayers + ".png";
+    std::string   cacheFile = mCache + mActiveWMS.mLayers + "/" + mActiveWMS.mLayers + ".png";
     out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
 
     if (!out) {
@@ -586,13 +590,13 @@ void SimpleWMSBody::setActiveWMS(std::string const& wms) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<WMSConfig> const& SimpleWMSBody::getWMSs() {
+std::vector<Plugin::Settings::WMSConfig> const& SimpleWMSBody::getWMSs() {
   return mWMSs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-WMSConfig const& SimpleWMSBody::getActiveWMS() {
+Plugin::Settings::WMSConfig const& SimpleWMSBody::getActiveWMS() {
   return mActiveWMS;
 }
 

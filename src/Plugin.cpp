@@ -6,6 +6,8 @@
 
 #include "Plugin.hpp"
 
+#include "SimpleWMSBody.hpp"
+
 #include "../../../src/cs-core/GraphicsEngine.hpp"
 #include "../../../src/cs-core/GuiManager.hpp"
 #include "../../../src/cs-core/InputManager.hpp"
@@ -37,7 +39,7 @@ namespace csp::simplewmsbodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void from_json(const nlohmann::json& j, WMSConfig& o) {
+void from_json(const nlohmann::json& j, Plugin::Settings::WMSConfig& o) {
   o.mName          = cs::core::parseProperty<std::string>("name", j);
   o.mCopyright     = cs::core::parseProperty<std::string>("copyright", j);
   o.mUrl           = cs::core::parseProperty<std::string>("url", j);
@@ -51,7 +53,7 @@ void from_json(const nlohmann::json& j, WMSConfig& o) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
-  o.mWMS             = cs::core::parseVector<WMSConfig>("wms", j);
+  o.mWMS             = cs::core::parseVector<Plugin::Settings::WMSConfig>("wms", j);
   o.mTexture         = cs::core::parseProperty<std::string>("texture", j);
   o.mGridResolutionX = cs::core::parseProperty<int>("gridResolutionX", j);
   o.mGridResolutionY = cs::core::parseProperty<int>("gridResolutionY", j);
@@ -60,14 +62,17 @@ void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void from_json(const nlohmann::json& j, Plugin::Settings& o) {
-  cs::core::parseSection("csp-simple-wms-bodies",
-      [&] { o.mBodies = cs::core::parseMap<std::string, Plugin::Settings::Body>("bodies", j); });
+  cs::core::parseSection("csp-simple-wms-bodies", [&] {
+    o.mMapCache = cs::core::parseProperty<std::string>("mapCache", j);
+    o.mBodies   = cs::core::parseMap<std::string, Plugin::Settings::Body>("bodies", j);
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Plugin::Plugin()
     : mProperties(std::make_shared<Properties>()) {
+
   // Create default logger for this plugin.
   spdlog::set_default_logger(cs::utils::logger::createLogger("csp-simple-wms-bodies"));
 }
@@ -108,9 +113,9 @@ void Plugin::init() {
     double tStartExistence = existence.first;
     double tEndExistence   = existence.second;
 
-    auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem,
-        anchor->second.mCenter, bodySettings.second.mTexture, anchor->second.mFrame,
-        tStartExistence, tEndExistence, bodySettings.second.mWMS, mTimeControl, mProperties,
+    auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem, mProperties,
+        mTimeControl, bodySettings.second.mTexture, anchor->second.mCenter, anchor->second.mFrame,
+        mPluginSettings.mMapCache, bodySettings.second.mWMS, tStartExistence, tEndExistence,
         bodySettings.second.mGridResolutionX, bodySettings.second.mGridResolutionY);
 
     mSolarSystem->registerBody(body);
