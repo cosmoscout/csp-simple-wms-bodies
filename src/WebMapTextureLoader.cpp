@@ -42,7 +42,7 @@ bool fileExist(const char* fileName) {
 
 std::string WebMapTextureLoader::loadTexture(std::string time, std::string requestStr,
     std::string const& layer, std::string const& mapCache) {
-  std::string cacheDir = mapCache + layer + "/";
+  std::string cacheDir = mapCache + "/" + layer + "/";
 
   // Add year subdirectory, if time is specified.
   if (time != "") {

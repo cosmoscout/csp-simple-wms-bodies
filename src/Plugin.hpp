@@ -10,9 +10,10 @@
 #include "utils.hpp"
 
 #include "../../../src/cs-core/PluginBase.hpp"
-#include "../../../src/cs-utils/Property.hpp"
+#include "../../../src/cs-utils/DefaultProperty.hpp"
 
-#include <VistaKernel/GraphicsManager/VistaOpenGLNode.h>
+#include <map>
+#include <string>
 
 namespace csp::simplewmsbodies {
 
@@ -23,17 +24,20 @@ class SimpleWMSBody;
 /// applications config file. See README.md for details.
 class Plugin : public cs::core::PluginBase {
  public:
-  struct Properties {
-    cs::utils::Property<bool> mEnableInterpolation = true;
-    cs::utils::Property<bool> mEnableTimespan      = false;
-  };
-
   /// The startup settings of the plugin.
   struct Settings {
+    /// Specifies whether to interpolate textures between timesteps (does not work when pre-fetch is
+    /// inactive).
+    cs::utils::DefaultProperty<bool> mEnableInterpolation{true};
+
+    /// Specifies whether to display timespan.
+    cs::utils::DefaultProperty<bool> mEnableTimespan{true};
+
+    /// Path to the map cache folder, can be absolute or relative to the cosmoscout executable.
+    cs::utils::DefaultProperty<std::string> mMapCache{"texture-cache"};
 
     /// A single WMS data set.
     struct WMSConfig {
-      std::string mName;      ///< The name of the data set as shown in the UI.
       std::string mCopyright; ///< The copyright holder of the data set (also shown in the UI).
       std::string mUrl;       ///< The URL of the map server including the "SERVICE=wms" parameter.
       int         mWidth;     ///< The width of the WMS image.
@@ -45,30 +49,25 @@ class Plugin : public cs::core::PluginBase {
     };
 
     /// The startup settings for a planet.
-    struct Body {
-      std::vector<WMSConfig> mWMS;             ///< The data sets containing WMS data.
+    struct SimpleWMSBody {      
+      std::optional<int>     mGridResolutionX; ///< The x resolution of the body grid.
+      std::optional<int>     mGridResolutionY; ///< The y resolution of the body gird.
       std::string            mTexture;         ///< The path to surface texture.
-      int                    mGridResolutionX; ///< The x resolution of the body grid.
-      int                    mGridResolutionY; ///< The y resolution of the body gird.
+      std::string            mActiveWMS;       ///< The name of the currently active WMS data set.
+      std::map<std::string, WMSConfig> mWMS;   ///< The data sets containing WMS data.
     };
 
-    std::string                 mMapCache; ///< Path to the map cache folder.
-    std::map<std::string, Body> mBodies;   ///< A list of planets with their anchor names.
+    std::map<std::string, SimpleWMSBody> mBodies; ///< A list of bodies with their anchor names.
   };
-
-  Plugin();
 
   void init() override;
   void deInit() override;
 
  private:
-  Settings                                    mPluginSettings;
-  std::vector<std::shared_ptr<SimpleWMSBody>> mSimpleWMSBodies;
-  std::vector<VistaOpenGLNode*>               mSimpleWMSBodyNodes;
-  std::shared_ptr<Properties>                 mProperties;
-  std::vector<TimeInterval>                   mIntervalsOnTimeline;
+  void onLoad();
 
-  int mActiveBodyConnection = -1;
+  Settings::SimpleWMSBody& getBodySettings(std::shared_ptr<SimpleWMSBody> const& body) const;
+  void setWMSSource(std::shared_ptr<SimpleWMSBody> const& body, std::string const& name) const;
 
   /// Add the time intervals of the current data set to timeline.
   void addTimeInterval(
@@ -76,6 +75,14 @@ class Plugin : public cs::core::PluginBase {
 
   /// Remove the time intervals of the current data set to timeline.
   void removeTimeInterval(std::vector<TimeInterval> timeIntervals);
+
+  std::shared_ptr<Settings>                             mPluginSettings = std::make_shared<Settings>();
+  std::map<std::string, std::shared_ptr<SimpleWMSBody>> mSimpleWMSBodies;
+  std::vector<TimeInterval>                             mIntervalsOnTimeline;
+
+  int mActiveBodyConnection = -1;
+  int mOnLoadConnection = -1;
+  int mOnSaveConnection = -1;  
 };
 
 } // namespace csp::simplewmsbodies

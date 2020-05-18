@@ -6,20 +6,15 @@
 
 #include "Plugin.hpp"
 
-#include "SimpleWMSBody.hpp"
-
-#include "../../../src/cs-core/GraphicsEngine.hpp"
+#include "../../../src/cs-core/Settings.hpp"
 #include "../../../src/cs-core/GuiManager.hpp"
 #include "../../../src/cs-core/InputManager.hpp"
 #include "../../../src/cs-core/SolarSystem.hpp"
 #include "../../../src/cs-core/TimeControl.hpp"
 #include "../../../src/cs-utils/logger.hpp"
 #include "../../../src/cs-utils/utils.hpp"
-
-#include <VistaKernel/GraphicsManager/VistaSceneGraph.h>
-#include <VistaKernel/GraphicsManager/VistaTransformNode.h>
-#include <VistaKernelOpenSGExt/VistaOpenSGMaterialTools.h>
-#include <VistaOGLExt/VistaTexture.h>
+#include "SimpleWMSBody.hpp"
+#include "logger.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -30,7 +25,7 @@ EXPORT_FN cs::core::PluginBase* create() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 EXPORT_FN void destroy(cs::core::PluginBase* pluginBase) {
-  delete pluginBase;
+  delete pluginBase; // NOLINT(cppcoreguidelines-owning-memory)
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,50 +34,66 @@ namespace csp::simplewmsbodies {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void from_json(const nlohmann::json& j, Plugin::Settings::WMSConfig& o) {
-  o.mName          = cs::core::parseProperty<std::string>("name", j);
-  o.mCopyright     = cs::core::parseProperty<std::string>("copyright", j);
-  o.mUrl           = cs::core::parseProperty<std::string>("url", j);
-  o.mWidth         = cs::core::parseProperty<int>("width", j);
-  o.mHeight        = cs::core::parseProperty<int>("height", j);
-  o.mTime          = cs::core::parseOptional<std::string>("time", j);
-  o.mPrefetchCount = cs::core::parseOptional<int>("preFetch", j);
-  o.mLayers        = cs::core::parseProperty<std::string>("layers", j);
+void from_json(nlohmann::json const& j, Plugin::Settings::WMSConfig& o) {
+  cs::core::Settings::deserialize(j, "copyright", o.mCopyright);
+  cs::core::Settings::deserialize(j, "url", o.mUrl);
+  cs::core::Settings::deserialize(j, "width", o.mWidth);
+  cs::core::Settings::deserialize(j, "height", o.mHeight);
+  cs::core::Settings::deserialize(j, "time", o.mTime);
+  cs::core::Settings::deserialize(j, "preFetch", o.mPrefetchCount);
+  cs::core::Settings::deserialize(j, "layers", o.mLayers);
+}
+
+void to_json(nlohmann::json& j, Plugin::Settings::WMSConfig const& o) {
+  cs::core::Settings::serialize(j, "copyright", o.mCopyright);
+  cs::core::Settings::serialize(j, "url", o.mUrl);
+  cs::core::Settings::serialize(j, "width", o.mWidth);
+  cs::core::Settings::serialize(j, "height", o.mHeight);
+  cs::core::Settings::serialize(j, "time", o.mTime);
+  cs::core::Settings::serialize(j, "preFetch", o.mPrefetchCount);
+  cs::core::Settings::serialize(j, "layers", o.mLayers);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void from_json(const nlohmann::json& j, Plugin::Settings::Body& o) {
-  o.mWMS             = cs::core::parseVector<Plugin::Settings::WMSConfig>("wms", j);
-  o.mTexture         = cs::core::parseProperty<std::string>("texture", j);
-  o.mGridResolutionX = cs::core::parseProperty<int>("gridResolutionX", j);
-  o.mGridResolutionY = cs::core::parseProperty<int>("gridResolutionY", j);
+void from_json(nlohmann::json const& j, Plugin::Settings::SimpleWMSBody& o) {
+  cs::core::Settings::deserialize(j, "gridResolutionX", o.mGridResolutionX);
+  cs::core::Settings::deserialize(j, "gridResolutionY", o.mGridResolutionY);
+  cs::core::Settings::deserialize(j, "texture", o.mTexture);
+  cs::core::Settings::deserialize(j, "activeWms", o.mActiveWMS);
+  cs::core::Settings::deserialize(j, "wms", o.mWMS);
+}
+
+void to_json(nlohmann::json& j, Plugin::Settings::SimpleWMSBody const& o) {
+  cs::core::Settings::serialize(j, "gridResolutionX", o.mGridResolutionX);
+  cs::core::Settings::serialize(j, "gridResolutionY", o.mGridResolutionY);
+  cs::core::Settings::serialize(j, "texture", o.mTexture);
+  cs::core::Settings::serialize(j, "activeWms", o.mActiveWMS);
+  cs::core::Settings::serialize(j, "wms", o.mWMS);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void from_json(const nlohmann::json& j, Plugin::Settings& o) {
-  cs::core::parseSection("csp-simple-wms-bodies", [&] {
-    o.mMapCache = cs::core::parseProperty<std::string>("mapCache", j);
-    o.mBodies   = cs::core::parseMap<std::string, Plugin::Settings::Body>("bodies", j);
-  });
+void from_json(nlohmann::json const& j, Plugin::Settings& o) {
+  cs::core::Settings::deserialize(j, "mapCache", o.mMapCache);
+  cs::core::Settings::deserialize(j, "bodies", o.mBodies);
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Plugin::Plugin()
-    : mProperties(std::make_shared<Properties>()) {
-
-  // Create default logger for this plugin.
-  spdlog::set_default_logger(cs::utils::logger::createLogger("csp-simple-wms-bodies"));
+void to_json(nlohmann::json& j, Plugin::Settings const& o) {
+  cs::core::Settings::serialize(j, "mapCache", o.mMapCache);
+  cs::core::Settings::serialize(j, "bodies", o.mBodies);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Plugin::init() {
-  spdlog::info("Loading plugin...");
 
-  mPluginSettings = mAllSettings->mPlugins.at("csp-simple-wms-bodies");
+  logger().info("Loading plugin...");
+
+  mOnLoadConnection = mAllSettings->onLoad().connect([this]() { onLoad(); });
+
+  mOnSaveConnection = mAllSettings->onSave().connect(
+      [this]() { mAllSettings->mPlugins["csp-simple-wms-bodies"] = *mPluginSettings; });
 
   mGuiManager->addPluginTabToSideBarFromHTML(
       "WMS", "panorama", "../share/resources/gui/wms_body_tab.html");
@@ -94,41 +105,26 @@ void Plugin::init() {
   // inactive).
   mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableTimeInterpolation",
       "Enables or disables interpolation.",
-      std::function([this](bool enable) { mProperties->mEnableInterpolation = enable; }));
+      std::function([this](bool enable) { mPluginSettings->mEnableInterpolation = enable; }));
 
   // Set whether to display timespan.
   mGuiManager->getGui()->registerCallback("simpleWmsBodies.setEnableTimeSpan",
       "Enables or disables timespan.",
-      std::function([this](bool enable) { mProperties->mEnableTimespan = enable; }));
+      std::function([this](bool enable) { mPluginSettings->mEnableTimespan = enable; }));
 
-  for (auto const& bodySettings : mPluginSettings.mBodies) {
-    auto anchor = mAllSettings->mAnchors.find(bodySettings.first);
+  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setWMS",
+      "Set the current planet's WMS source to the one with the given name.",
+      std::function([this](std::string&& name) {
+        auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
+        if (body) {
+          setWMSSource(body, name);
 
-    if (anchor == mAllSettings->mAnchors.end()) {
-      throw std::runtime_error(
-          "There is no Anchor \"" + bodySettings.first + "\" defined in the settings.");
-    }
-
-    auto   existence       = cs::core::getExistenceFromSettings(*anchor);
-    double tStartExistence = existence.first;
-    double tEndExistence   = existence.second;
-
-    auto body = std::make_shared<SimpleWMSBody>(mGraphicsEngine, mSolarSystem, mProperties,
-        mTimeControl, bodySettings.second.mTexture, anchor->second.mCenter, anchor->second.mFrame,
-        mPluginSettings.mMapCache, bodySettings.second.mWMS, tStartExistence, tEndExistence,
-        bodySettings.second.mGridResolutionX, bodySettings.second.mGridResolutionY);
-
-    mSolarSystem->registerBody(body);
-    mInputManager->registerSelectable(body);
-
-    body->setSun(mSolarSystem->getSun());
-    auto parent = mSceneGraph->NewOpenGLNode(mSceneGraph->GetRoot(), body.get());
-    mSimpleWMSBodyNodes.push_back(parent);
-    mSimpleWMSBodies.push_back(body);
-
-    VistaOpenSGMaterialTools::SetSortKeyOnSubtree(
-        parent, static_cast<int>(cs::utils::DrawOrder::ePlanets));
-  }
+          // TODO: Move to setWMSSource???
+          removeTimeInterval(mIntervalsOnTimeline);
+          mIntervalsOnTimeline = body->getTimeIntervals();
+          addTimeInterval(mIntervalsOnTimeline, name, body->getCenterName());
+        }
+      }));
 
   mActiveBodyConnection = mSolarSystem->pActiveBody.connectAndTouch(
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
@@ -137,44 +133,124 @@ void Plugin::init() {
         // Remove time intervals of the old body.
         removeTimeInterval(mIntervalsOnTimeline);
 
+        mGuiManager->getGui()->callJavascript(
+            "CosmoScout.sidebar.setTabEnabled", "WMS", simpleWMSBody != nullptr);
+
         if (!simpleWMSBody) {
           return;
         }
 
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.gui.clearDropdown", "simpleWmsBodies.setWMS");
-        for (auto const& wms : simpleWMSBody->getWMSs()) {
-          bool active = wms.mName == simpleWMSBody->getActiveWMS().mName;
+
+        auto const& settings = getBodySettings(simpleWMSBody);
+        for (auto const& wms : settings.mWMS) {
+          bool active = wms.first == settings.mActiveWMS;
           mGuiManager->getGui()->callJavascript("CosmoScout.gui.addDropdownValue",
-              "simpleWmsBodies.setWMS", wms.mName, wms.mName, active);
+              "simpleWmsBodies.setWMS", wms.first, wms.first, active);
           if (active) {
             mGuiManager->getGui()->callJavascript(
-                "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
+                "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.second.mCopyright);
 
             mIntervalsOnTimeline = simpleWMSBody->getTimeIntervals();
-            addTimeInterval(mIntervalsOnTimeline, wms.mName, simpleWMSBody->getCenterName());
+            addTimeInterval(mIntervalsOnTimeline, wms.first, simpleWMSBody->getCenterName());
           }
         }
       });
 
-  mGuiManager->getGui()->registerCallback("simpleWmsBodies.setWMS",
-      "Set the current planet's WMS source to the one with the given name.",
-      std::function([this](std::string&& name) {
-        auto body = std::dynamic_pointer_cast<SimpleWMSBody>(mSolarSystem->pActiveBody.get());
-        if (body) {
-          removeTimeInterval(mIntervalsOnTimeline);
-          body->setActiveWMS(name);
-          auto wms = body->getActiveWMS();
+  onLoad();
 
-          mGuiManager->getGui()->callJavascript(
-              "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.mCopyright);
+  logger().info("Loading done.");
+}
 
-          mIntervalsOnTimeline = body->getTimeIntervals();
-          addTimeInterval(mIntervalsOnTimeline, name, body->getCenterName());
-        }
-      }));
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  spdlog::info("Loading done.");
+void Plugin::deInit() {
+
+  logger().info("Unloading plugin...");
+
+  for (auto const& simpleWMSBody : mSimpleWMSBodies) {
+    mSolarSystem->unregisterBody(simpleWMSBody.second);
+    mInputManager->unregisterSelectable(simpleWMSBody.second);
+  }
+
+  mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
+
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeInterpolation");
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeSpan");
+  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setWMS");
+
+  mGuiManager->getGui()->callJavascript(
+      "CosmoScout.gui.unregisterCss", "css/csp-simple-wms-bodies.css");
+
+  mAllSettings->onLoad().disconnect(mOnLoadConnection);
+  mAllSettings->onSave().disconnect(mOnSaveConnection);
+
+  logger().info("Unloading done.");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Plugin::onLoad() {
+
+  // Read settings from JSON.
+  from_json(mAllSettings->mPlugins.at("csp-simple-wms-bodies"), *mPluginSettings);
+
+  // First try to re-configure existing simpleWMSBodies. We assume that they are similar if they have
+  // the same name in the settings (which means they are attached to an anchor with the same name).
+  auto simpleWMSBody = mSimpleWMSBodies.begin();
+  while (simpleWMSBody != mSimpleWMSBodies.end()) {
+    auto settings = mPluginSettings->mBodies.find(simpleWMSBody->first);
+    if (settings != mPluginSettings->mBodies.end()) {
+      // If there are settings for this simpleWMSBody, reconfigure it.
+      auto anchor                           = mAllSettings->mAnchors.find(settings->first);
+      auto [tStartExistence, tEndExistence] = anchor->second.getExistence();
+      simpleWMSBody->second->setStartExistence(tStartExistence);
+      simpleWMSBody->second->setEndExistence(tEndExistence);
+      simpleWMSBody->second->setFrameName(anchor->second.mFrame);
+      simpleWMSBody->second->setCenterName(anchor->second.mCenter);
+      simpleWMSBody->second->configure(settings->second);
+
+      setWMSSource(simpleWMSBody->second, settings->second.mActiveWMS);
+
+      ++simpleWMSBody;
+    } else {
+      // Else delete it.
+      mSolarSystem->unregisterBody(simpleWMSBody->second);
+      mInputManager->unregisterSelectable(simpleWMSBody->second);
+      simpleWMSBody = mSimpleWMSBodies.erase(simpleWMSBody);
+    }
+  }
+
+  // Then add new simpleWMSBodies.
+  for (auto const& settings : mPluginSettings->mBodies) {
+    if (mSimpleWMSBodies.find(settings.first) != mSimpleWMSBodies.end()) {
+      continue;
+    }
+
+    auto anchor = mAllSettings->mAnchors.find(settings.first);
+
+    if (anchor == mAllSettings->mAnchors.end()) {
+      throw std::runtime_error(
+          "There is no Anchor \"" + settings.first + "\" defined in the settings.");
+    }
+
+    auto [tStartExistence, tEndExistence] = anchor->second.getExistence();
+
+    auto simpleWMSBody = std::make_shared<SimpleWMSBody>(mAllSettings, mSolarSystem, mPluginSettings,
+        mTimeControl, anchor->second.mCenter, anchor->second.mFrame, tStartExistence, tEndExistence);
+
+    mSimpleWMSBodies.emplace(settings.first, simpleWMSBody);
+
+    setWMSSource(simpleWMSBody, settings.second.mActiveWMS);
+    simpleWMSBody->configure(settings.second);
+    simpleWMSBody->setSun(mSolarSystem->getSun());
+
+    mSolarSystem->registerBody(simpleWMSBody);
+    mInputManager->registerSelectable(simpleWMSBody);
+  }
+
+  mSolarSystem->pActiveBody.touch(mActiveBodyConnection);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,7 +263,7 @@ void Plugin::removeTimeInterval(std::vector<TimeInterval> timeIntervals) {
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->removeEventFromTimenavigationBar(id);
+    // mGuiManager->removeBookmark(id);
   }
 }
 
@@ -202,32 +278,44 @@ void Plugin::addTimeInterval(
       end = "";
     }
     std::string id = "wms" + start + end;
-    mGuiManager->addEventToTimenavigationBar(
-        start, end, id, "Valid WMS Time", "border-color: green", wmsName, planetName, "");
+
+    cs::core::Settings::Bookmark bookmark;
+    mGuiManager->addBookmark(bookmark);         // TODO: finish
+    // mGuiManager->addEventToTimenavigationBar(
+    //     start, end, id, "Valid WMS Time", "border-color: green", wmsName, planetName, "");
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::deInit() {
-  spdlog::info("Unloading plugin...");
+Plugin::Settings::SimpleWMSBody& Plugin::getBodySettings(std::shared_ptr<SimpleWMSBody> const& simpleWMSBody) const {
+  auto name = std::find_if(
+      mSimpleWMSBodies.begin(), mSimpleWMSBodies.end(), [&](auto const& pair) { return pair.second == simpleWMSBody; });
+  return mPluginSettings->mBodies.at(name->first);
+}
 
-  for (auto const& simpleWMSBody : mSimpleWMSBodies) {
-    mSolarSystem->unregisterBody(simpleWMSBody);
-    mInputManager->unregisterSelectable(simpleWMSBody);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Plugin::setWMSSource(std::shared_ptr<SimpleWMSBody> const& simpleWMSBody, std::string const& name) const {
+  auto& settings      = getBodySettings(simpleWMSBody);
+  settings.mActiveWMS = name;
+
+  if (name == "None") {
+    simpleWMSBody->setActiveWMS(nullptr);
+    mGuiManager->getGui()->callJavascript("CosmoScout.simpleWMSBodies.setWMSDataCopyright", "");
+  } else {
+    auto dataset = settings.mWMS.find(name);
+    if (dataset == settings.mWMS.end()) {
+      logger().warn("Cannot set WMS dataset '{}': There is no dataset defined with this name! "
+                    "Using first dataset instead...", name);
+      dataset = settings.mWMS.begin();
+    }
+
+    simpleWMSBody->setActiveWMS(std::make_shared<Settings::WMSConfig>(dataset->second));
+
+    mGuiManager->getGui()->callJavascript(
+        "CosmoScout.simpleWMSBodies.setWMSDataCopyright", dataset->second.mCopyright);
   }
-
-  for (auto const& simpleWMSBodyNode : mSimpleWMSBodyNodes) {
-    mSceneGraph->GetRoot()->DisconnectChild(simpleWMSBodyNode);
-  }
-
-  mSolarSystem->pActiveBody.disconnect(mActiveBodyConnection);
-
-  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeInterpolation");
-  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setEnableTimeSpan");
-  mGuiManager->getGui()->unregisterCallback("simpleWmsBodies.setWMS");
-
-  spdlog::info("Unloading done.");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
