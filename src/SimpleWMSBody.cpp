@@ -306,7 +306,7 @@ bool SimpleWMSBody::Do() {
       std::string timeString = utils::timeToString(mFormat.c_str(), startTime);
 
       // Select a WMS texture over the period of timeDuration if timespan is enabled.
-      if (mPluginSettings->mEnableTimespan.get()) {
+      if (mPluginSettings->mEnableTimespan.get() && mIntervalDuration != 0) {
         boost::posix_time::time_duration timeDuration =
             boost::posix_time::seconds(mIntervalDuration);
         boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
@@ -373,7 +373,7 @@ bool SimpleWMSBody::Do() {
     boost::posix_time::time_duration timeDuration = boost::posix_time::seconds(mIntervalDuration);
     std::string                      timeString   = utils::timeToString(mFormat.c_str(), startTime);
 
-    if (mPluginSettings->mEnableTimespan.get()) {
+    if (mPluginSettings->mEnableTimespan.get() && mIntervalDuration != 0) {
       boost::posix_time::ptime intervalAfter = getStartTime(startTime + timeDuration);
       timeString += "/" + utils::timeToString(mFormat.c_str(), intervalAfter);
     }
