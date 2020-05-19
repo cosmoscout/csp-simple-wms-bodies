@@ -7,19 +7,16 @@
 #ifndef CSP_WMS_SIMPLE_BODIES_HPP
 #define CSP_WMS_SIMPLE_BODIES_HPP
 
-#include "Plugin.hpp"
-#include "WebMapTextureLoader.hpp"
-#include "utils.hpp"
-
-#include "../../../src/cs-scene/CelestialBody.hpp"
-
 #include <VistaKernel/GraphicsManager/VistaOpenGLDraw.h>
 #include <VistaKernel/GraphicsManager/VistaOpenGLNode.h>
 #include <VistaOGLExt/VistaBufferObject.h>
 #include <VistaOGLExt/VistaGLSLShader.h>
 #include <VistaOGLExt/VistaVertexArrayObject.h>
 
-#include <glm/gtc/type_ptr.hpp>
+#include "../../../src/cs-scene/CelestialBody.hpp"
+#include "Plugin.hpp"
+#include "WebMapTextureLoader.hpp"
+#include "utils.hpp"
 
 namespace cs::core {
 class SolarSystem;
@@ -68,11 +65,8 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   bool Do() override;
   bool GetBoundingBox(VistaBoundingBox& bb) override;
 
-  /// Getter for the WMS configs of the active body.
-  std::vector<Plugin::Settings::WMSConfig> const& getWMSs();
-
-  /// Setter and getter for the active WMS data set.
-  void setActiveWMS(std::shared_ptr<Plugin::Settings::WMSConfig> wms);
+  /// Set the active WMS data set.
+  void setActiveWMS(Plugin::Settings::WMSConfig const& wms);
 
   std::vector<TimeInterval> getTimeIntervals();
 
@@ -87,31 +81,26 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   glm::dvec3 mRadii;
   std::mutex mWMSMutex;
 
-  Plugin::Settings::SimpleWMSBody mSimpleWMSBodySettings;
+  std::shared_ptr<Plugin::Settings> mPluginSettings;
+  Plugin::Settings::SimpleWMSBody   mSimpleWMSBodySettings;
+  Plugin::Settings::WMSConfig       mActiveWMS; ///< WMS config of the active WMS data set.
 
-  std::vector<Plugin::Settings::WMSConfig> mWMSs; ///< WMS configs of the active body.
-  std::shared_ptr<Plugin::Settings::WMSConfig>
-                                mActiveWMS;         ///< WMS config of the active WMS data set.
   std::shared_ptr<VistaTexture> mBackgroundTexture; ///< The background texture of the body.
   std::shared_ptr<VistaTexture> mWMSTexture;        ///< The WMS texture.
   std::shared_ptr<VistaTexture> mSecondWMSTexture;  ///< Second WMS texture for time interpolation.
-  std::string                   mBackgroundTextureFile; ///< Local path to background texture.
-  bool                          mWMSTextureUsed;        ///< Whether to use the WMS texture.
-  bool        mSecondWMSTextureUsed = false;            ///< Whether to use the second WMS texture.
-  std::string mCurrentTexture;                          ///< Timestep of the current WMS texture.
-  std::string mCurrentSecondTexture;                    ///< Timestep of the second WMS texture.
-  float       mFade;                                    ///< Fading value between WMS textures.
-  std::string mRequest;                                 ///< WMS server request URL.
-  std::string mFormat;                                  ///< Time format style.
-  int         mIntervalDuration;                        ///< Duration of the current time interval.
-  std::vector<TimeInterval> mTimeIntervals;             ///< Time intervals of data set.
-  std::string               mCache = "cache/texture/";  ///< Cache directory of downloaded textures.
+  bool                          mWMSTextureUsed;    ///< Whether to use the WMS texture.
+  bool        mSecondWMSTextureUsed = false;        ///< Whether to use the second WMS texture.
+  std::string mCurrentTexture;                      ///< Timestep of the current WMS texture.
+  std::string mCurrentSecondTexture;                ///< Timestep of the second WMS texture.
+  float       mFade;                                ///< Fading value between WMS textures.
+  std::string mRequest;                             ///< WMS server request URL.
+  std::string mFormat;                              ///< Time format style.
+  int         mIntervalDuration;                    ///< Duration of the current time interval.
+  std::vector<TimeInterval> mTimeIntervals;         ///< Time intervals of data set.
 
   std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
   std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;
   std::map<std::string, unsigned char*>              mTextures;
-
-  std::shared_ptr<Plugin::Settings> mPluginSettings;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;

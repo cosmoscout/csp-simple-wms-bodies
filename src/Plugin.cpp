@@ -12,7 +12,6 @@
 #include "../../../src/cs-core/SolarSystem.hpp"
 #include "../../../src/cs-core/TimeControl.hpp"
 #include "../../../src/cs-utils/logger.hpp"
-#include "../../../src/cs-utils/utils.hpp"
 #include "SimpleWMSBody.hpp"
 #include "logger.hpp"
 
@@ -112,6 +111,7 @@ void Plugin::init() {
       "Enables or disables timespan.",
       std::function([this](bool enable) { mPluginSettings->mEnableTimespan = enable; }));
 
+  // Set WMS source.
   mGuiManager->getGui()->registerCallback("simpleWmsBodies.setWMS",
       "Set the current planet's WMS source to the one with the given name.",
       std::function([this](std::string&& name) {
@@ -301,26 +301,23 @@ Plugin::Settings::SimpleWMSBody& Plugin::getBodySettings(
 
 void Plugin::setWMSSource(
     std::shared_ptr<SimpleWMSBody> const& simpleWMSBody, std::string const& name) const {
-  auto& settings      = getBodySettings(simpleWMSBody);
+
+  auto& settings = getBodySettings(simpleWMSBody);
+
+  auto dataset = settings.mWMS.find(name);
+  if (dataset == settings.mWMS.end()) {
+    logger().warn("Cannot set WMS dataset '{}': There is no dataset defined with this name! "
+                  "Using first dataset instead...",
+        name);
+    dataset = settings.mWMS.begin();
+  }
+
   settings.mActiveWMS = name;
 
-  if (name == "None") {
-    simpleWMSBody->setActiveWMS(nullptr);
-    mGuiManager->getGui()->callJavascript("CosmoScout.simpleWMSBodies.setWMSDataCopyright", "");
-  } else {
-    auto dataset = settings.mWMS.find(name);
-    if (dataset == settings.mWMS.end()) {
-      logger().warn("Cannot set WMS dataset '{}': There is no dataset defined with this name! "
-                    "Using first dataset instead...",
-          name);
-      dataset = settings.mWMS.begin();
-    }
+  simpleWMSBody->setActiveWMS(dataset->second);
 
-    simpleWMSBody->setActiveWMS(std::make_shared<Settings::WMSConfig>(dataset->second));
-
-    mGuiManager->getGui()->callJavascript(
-        "CosmoScout.simpleWMSBodies.setWMSDataCopyright", dataset->second.mCopyright);
-  }
+  mGuiManager->getGui()->callJavascript(
+      "CosmoScout.simpleWMSBodies.setWMSDataCopyright", dataset->second.mCopyright);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

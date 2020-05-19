@@ -5,7 +5,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "SimpleWMSBody.hpp"
-#include "Plugin.hpp"
 
 #include "../../../src/cs-core/Settings.hpp"
 #include "../../../src/cs-core/SolarSystem.hpp"
@@ -22,8 +21,10 @@
 #include <VistaMath/VistaBoundingBox.h>
 #include <VistaOGLExt/VistaOGLUtils.h>
 #include <VistaOGLExt/VistaTexture.h>
+
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace csp::simplewmsbodies {
 
@@ -191,10 +192,10 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::Settings> const& settings
   mSphereVBO.Release();
 
   // Recreate the shader if lighting or HDR rendering mode are toggled.
-  mEnableLightingConnection =
-      mSettings->mGraphics.pEnableLighting.connect([this](bool) { mShaderDirty = true; });
+  mEnableLightingConnection = mSettings->mGraphics.pEnableLighting.connect(
+      [this](bool /*enabled*/) { mShaderDirty = true; });
   mEnableHDRConnection =
-      mSettings->mGraphics.pEnableHDR.connect([this](bool) { mShaderDirty = true; });
+      mSettings->mGraphics.pEnableHDR.connect([this](bool /*enabled*/) { mShaderDirty = true; });
 
   // Add to scenegraph.
   VistaSceneGraph* pSG = GetVistaSystem()->GetGraphicsManager()->GetSceneGraph();
@@ -283,14 +284,14 @@ bool SimpleWMSBody::Do() {
 
   cs::utils::FrameTimings::ScopedTimer timer("Simple WMS Bodies");
 
-  if (mActiveWMS->mTime.has_value()) {
+  if (mActiveWMS.mTime.has_value()) {
     boost::posix_time::ptime time =
         cs::utils::convert::time::toPosix(mTimeControl->pSimulationTime.get());
 
     // Select WMS textures to be downloaded. If no pre-fetch is set, only sellect the texture for
     // the current timestep.
-    for (int preFetch = -mActiveWMS->mPrefetchCount.value_or(0);
-         preFetch <= mActiveWMS->mPrefetchCount.value_or(0); preFetch++) {
+    for (int preFetch = -mActiveWMS.mPrefetchCount.value_or(0);
+         preFetch <= mActiveWMS.mPrefetchCount.value_or(0); preFetch++) {
       boost::posix_time::time_duration td = boost::posix_time::seconds(mIntervalDuration);
       time = cs::utils::convert::time::toPosix(mTimeControl->pSimulationTime.get()) + td * preFetch;
       boost::posix_time::time_duration timeSinceStart;
@@ -320,8 +321,9 @@ bool SimpleWMSBody::Do() {
       if (texture1 == mTextureFilesBuffer.end() && texture2 == mTexturesBuffer.end() &&
           texture3 == mTextures.end() && inInterval) {
         // Load WMS texture to the disk.
-        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(timeString,
-            mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWMS->mLayers, mCache)));
+        mTextureFilesBuffer.insert(std::pair<std::string, std::future<std::string>>(
+            timeString, mTextureLoader.loadTextureAsync(timeString, mRequest, mActiveWMS.mLayers,
+                            mPluginSettings->mMapCache.get())));
       }
     }
 
@@ -382,7 +384,7 @@ bool SimpleWMSBody::Do() {
       // Only update if we have a new texture.
       if (mCurrentTexture != timeString && tex != mTextures.end()) {
         mWMSTextureUsed = true;
-        mWMSTexture->UploadTexture(mActiveWMS->mWidth, mActiveWMS->mHeight, tex->second, false);
+        mWMSTexture->UploadTexture(mActiveWMS.mWidth, mActiveWMS.mHeight, tex->second, false);
         mCurrentTexture = timeString;
       }
     } // Use default planet texture instead.
@@ -403,7 +405,7 @@ bool SimpleWMSBody::Do() {
         // Only update if we ha a new second texture.
         if (mCurrentSecondTexture != utils::timeToString(mFormat.c_str(), intervalAfter)) {
           mSecondWMSTexture->UploadTexture(
-              mActiveWMS->mWidth, mActiveWMS->mHeight, tex->second, false);
+              mActiveWMS.mWidth, mActiveWMS.mHeight, tex->second, false);
           mCurrentSecondTexture = utils::timeToString(mFormat.c_str(), intervalAfter);
           mSecondWMSTextureUsed = true;
         }
@@ -538,47 +540,37 @@ boost::posix_time::ptime SimpleWMSBody::getStartTime(boost::posix_time::ptime ti
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SimpleWMSBody::setActiveWMS(std::shared_ptr<Plugin::Settings::WMSConfig> wms) {
-  if (wms) {
-    mTextures.clear();
-    mTextureFilesBuffer.clear();
-    mTexturesBuffer.clear();
-    mTimeIntervals.clear();
-    mWMSTextureUsed       = false;
-    mSecondWMSTextureUsed = false;
-    mCurrentTexture       = "";
-    mCurrentSecondTexture = "";
-    mActiveWMS            = std::move(wms);
+void SimpleWMSBody::setActiveWMS(Plugin::Settings::WMSConfig const& wms) {
+  mTextures.clear();
+  mTextureFilesBuffer.clear();
+  mTexturesBuffer.clear();
+  mTimeIntervals.clear();
+  mWMSTextureUsed       = false;
+  mSecondWMSTextureUsed = false;
+  mCurrentTexture       = "";
+  mCurrentSecondTexture = "";
+  mActiveWMS            = wms;
 
-    // Create request URL for map server.
-    std::stringstream url;
-    url << mActiveWMS->mUrl << "&WIDTH=" << mActiveWMS->mWidth << "&HEIGHT=" << mActiveWMS->mHeight
-        << "&LAYERS=" << mActiveWMS->mLayers;
-    mRequest = url.str();
+  // Create request URL for map server.
+  std::stringstream url;
+  url << mActiveWMS.mUrl << "&WIDTH=" << mActiveWMS.mWidth << "&HEIGHT=" << mActiveWMS.mHeight
+      << "&LAYERS=" << mActiveWMS.mLayers;
+  mRequest = url.str();
 
-    // Set time intervals and format if it is defined in config.
-    if (mActiveWMS->mTime.has_value()) {
-      utils::parseIsoString(mActiveWMS->mTime.value(), mTimeIntervals);
-      mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
-      mFormat           = mTimeIntervals.at(0).mFormat;
-    } // Download WMS texture without timestep.
-    else {
-      std::string cacheFile = mTextureLoader.loadTexture("", mRequest, mActiveWMS->mLayers, mCache);
-      if (cacheFile != "Error") {
-        mWMSTexture     = cs::graphics::TextureLoader::loadFromFile(cacheFile);
-        mWMSTextureUsed = true;
-      }
+  // Set time intervals and format if it is defined in config.
+  if (mActiveWMS.mTime.has_value()) {
+    utils::parseIsoString(mActiveWMS.mTime.value(), mTimeIntervals);
+    mIntervalDuration = mTimeIntervals.at(0).mIntervalDuration;
+    mFormat           = mTimeIntervals.at(0).mFormat;
+  } // Download WMS texture without timestep.
+  else {
+    std::string cacheFile = mTextureLoader.loadTexture(
+        "", mRequest, mActiveWMS.mLayers, mPluginSettings->mMapCache.get());
+    if (cacheFile != "Error") {
+      mWMSTexture     = cs::graphics::TextureLoader::loadFromFile(cacheFile);
+      mWMSTextureUsed = true;
     }
-  } else {
-    mActiveWMS = nullptr;
-    // TODO
   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::vector<Plugin::Settings::WMSConfig> const& SimpleWMSBody::getWMSs() {
-  return mWMSs;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

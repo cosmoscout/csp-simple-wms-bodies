@@ -9,6 +9,7 @@
 #include "../../../src/cs-utils/convert.hpp"
 #include "../../../src/cs-utils/filesystem.hpp"
 #include "../../../src/cs-utils/logger.hpp"
+#include "logger.hpp"
 
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
@@ -61,7 +62,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
       cs::utils::filesystem::createDirectoryRecursively(
           cacheDirPath, boost::filesystem::perms::all_all);
     } catch (std::exception& e) {
-      spdlog::error("Failed to create cache directory: '{}'!", e.what());
+      logger().error("Failed to create cache directory: '{}'!", e.what());
       return "Error";
     }
   }
@@ -89,7 +90,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
   out.open(cacheFile, std::ofstream::out | std::ofstream::binary);
 
   if (!out) {
-    spdlog::error("Failed to open '{}' for writing!", cacheFile);
+    logger().error("Failed to open '{}' for writing!", cacheFile);
     return "Error";
   }
 
@@ -102,7 +103,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
   try {
     request.perform();
   } catch (std::exception& e) {
-    spdlog::error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
+    logger().error("Failed to load '{}'! Exception: '{}'", requestStr, e.what());
     out.close();
     remove(cacheFile.c_str());
     return "Error";
