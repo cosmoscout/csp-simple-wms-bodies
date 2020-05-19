@@ -12,14 +12,15 @@ This plugin can be enabled with the following configuration in your `settings.js
   "plugins": {
     ...
     "csp-simple-wms-bodies": {
+	  "mapCache": <string>,           // The path to map cache folder.
       "bodies": {
         <anchor name>: {
           "gridResolutionX": <int>,   // The x resolution of the body grid.
           "gridResolutionY": <int>,   // The y resolution of the body grid.
           "texture": <string>,        // The path to background surface texture. The texture from the WMS image will be overlaid.
-          "wms": [
-            {
-              "name": <string>,       // The name of the data set as shown in the UI.
+          "activeWms": <string>,      // The name of the currectly active WMS data set.
+          "wms": {
+            <dataset name> : {
               "copyright": <string>,  // The copyright holder of the data set (also shown in the UI).
               "url": <string>,        // The URL of the map server including the "SERVICE=wms" parameter.
               "width": <int>,         // The width of the WMS image.
@@ -29,7 +30,7 @@ This plugin can be enabled with the following configuration in your `settings.js
               "preFetch": <int>       // The amount of textures that gets pre-fetched in every time direction, optional.
             },
             ... <more WMS datasets> ...
-          ]
+          }
         },
         ... <more bodies> ...
       }
