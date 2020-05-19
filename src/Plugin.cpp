@@ -6,9 +6,9 @@
 
 #include "Plugin.hpp"
 
-#include "../../../src/cs-core/Settings.hpp"
 #include "../../../src/cs-core/GuiManager.hpp"
 #include "../../../src/cs-core/InputManager.hpp"
+#include "../../../src/cs-core/Settings.hpp"
 #include "../../../src/cs-core/SolarSystem.hpp"
 #include "../../../src/cs-core/TimeControl.hpp"
 #include "../../../src/cs-utils/logger.hpp"
@@ -196,8 +196,9 @@ void Plugin::onLoad() {
   // Read settings from JSON.
   from_json(mAllSettings->mPlugins.at("csp-simple-wms-bodies"), *mPluginSettings);
 
-  // First try to re-configure existing simpleWMSBodies. We assume that they are similar if they have
-  // the same name in the settings (which means they are attached to an anchor with the same name).
+  // First try to re-configure existing simpleWMSBodies. We assume that they are similar if they
+  // have the same name in the settings (which means they are attached to an anchor with the same
+  // name).
   auto simpleWMSBody = mSimpleWMSBodies.begin();
   while (simpleWMSBody != mSimpleWMSBodies.end()) {
     auto settings = mPluginSettings->mBodies.find(simpleWMSBody->first);
@@ -237,8 +238,9 @@ void Plugin::onLoad() {
 
     auto [tStartExistence, tEndExistence] = anchor->second.getExistence();
 
-    auto simpleWMSBody = std::make_shared<SimpleWMSBody>(mAllSettings, mSolarSystem, mPluginSettings,
-        mTimeControl, anchor->second.mCenter, anchor->second.mFrame, tStartExistence, tEndExistence);
+    auto simpleWMSBody =
+        std::make_shared<SimpleWMSBody>(mAllSettings, mSolarSystem, mPluginSettings, mTimeControl,
+            anchor->second.mCenter, anchor->second.mFrame, tStartExistence, tEndExistence);
 
     mSimpleWMSBodies.emplace(settings.first, simpleWMSBody);
 
@@ -280,7 +282,7 @@ void Plugin::addTimeInterval(
     std::string id = "wms" + start + end;
 
     cs::core::Settings::Bookmark bookmark;
-    mGuiManager->addBookmark(bookmark);         // TODO: finish
+    mGuiManager->addBookmark(bookmark); // TODO: finish
     // mGuiManager->addEventToTimenavigationBar(
     //     start, end, id, "Valid WMS Time", "border-color: green", wmsName, planetName, "");
   }
@@ -288,15 +290,17 @@ void Plugin::addTimeInterval(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Plugin::Settings::SimpleWMSBody& Plugin::getBodySettings(std::shared_ptr<SimpleWMSBody> const& simpleWMSBody) const {
-  auto name = std::find_if(
-      mSimpleWMSBodies.begin(), mSimpleWMSBodies.end(), [&](auto const& pair) { return pair.second == simpleWMSBody; });
+Plugin::Settings::SimpleWMSBody& Plugin::getBodySettings(
+    std::shared_ptr<SimpleWMSBody> const& simpleWMSBody) const {
+  auto name = std::find_if(mSimpleWMSBodies.begin(), mSimpleWMSBodies.end(),
+      [&](auto const& pair) { return pair.second == simpleWMSBody; });
   return mPluginSettings->mBodies.at(name->first);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::setWMSSource(std::shared_ptr<SimpleWMSBody> const& simpleWMSBody, std::string const& name) const {
+void Plugin::setWMSSource(
+    std::shared_ptr<SimpleWMSBody> const& simpleWMSBody, std::string const& name) const {
   auto& settings      = getBodySettings(simpleWMSBody);
   settings.mActiveWMS = name;
 
@@ -307,7 +311,8 @@ void Plugin::setWMSSource(std::shared_ptr<SimpleWMSBody> const& simpleWMSBody, s
     auto dataset = settings.mWMS.find(name);
     if (dataset == settings.mWMS.end()) {
       logger().warn("Cannot set WMS dataset '{}': There is no dataset defined with this name! "
-                    "Using first dataset instead...", name);
+                    "Using first dataset instead...",
+          name);
       dataset = settings.mWMS.begin();
     }
 

@@ -17,8 +17,8 @@
 
 #include <VistaKernel/GraphicsManager/VistaSceneGraph.h>
 #include <VistaKernel/GraphicsManager/VistaTransformNode.h>
-#include <VistaKernelOpenSGExt/VistaOpenSGMaterialTools.h>
 #include <VistaKernel/VistaSystem.h>
+#include <VistaKernelOpenSGExt/VistaOpenSGMaterialTools.h>
 #include <VistaMath/VistaBoundingBox.h>
 #include <VistaOGLExt/VistaOGLUtils.h>
 #include <VistaOGLExt/VistaTexture.h>
@@ -136,11 +136,10 @@ void main()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::Settings> const& settings,
-      std::shared_ptr<cs::core::SolarSystem>         solarSystem,
-      std::shared_ptr<Plugin::Settings> const&       pluginSettings,
-      std::shared_ptr<cs::core::TimeControl>         timeControl,
-      std::string const& sCenterName, std::string const& sFrameName,
-      double tStartExistence, double tEndExistence)
+    std::shared_ptr<cs::core::SolarSystem>                              solarSystem,
+    std::shared_ptr<Plugin::Settings> const&                            pluginSettings,
+    std::shared_ptr<cs::core::TimeControl> timeControl, std::string const& sCenterName,
+    std::string const& sFrameName, double tStartExistence, double tEndExistence)
     : cs::scene::CelestialBody(sCenterName, sFrameName, tStartExistence, tEndExistence)
     , mSettings(settings)
     , mSolarSystem(solarSystem)
@@ -148,8 +147,8 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::Settings> const& settings
     , mRadii(cs::core::SolarSystem::getRadii(sCenterName))
     , mWMSTexture(new VistaTexture(GL_TEXTURE_2D))
     , mSecondWMSTexture(new VistaTexture(GL_TEXTURE_2D)) {
-  pVisibleRadius         = mRadii[0];
-  mTimeControl           = timeControl;
+  pVisibleRadius = mRadii[0];
+  mTimeControl   = timeControl;
 
   // For rendering the sphere, we create a 2D-grid which is warped into a sphere in the vertex
   // shader. The vertex positions are directly used as texture coordinates.
@@ -194,7 +193,8 @@ SimpleWMSBody::SimpleWMSBody(std::shared_ptr<cs::core::Settings> const& settings
   // Recreate the shader if lighting or HDR rendering mode are toggled.
   mEnableLightingConnection =
       mSettings->mGraphics.pEnableLighting.connect([this](bool) { mShaderDirty = true; });
-  mEnableHDRConnection = mSettings->mGraphics.pEnableHDR.connect([this](bool) { mShaderDirty = true; });
+  mEnableHDRConnection =
+      mSettings->mGraphics.pEnableHDR.connect([this](bool) { mShaderDirty = true; });
 
   // Add to scenegraph.
   VistaSceneGraph* pSG = GetVistaSystem()->GetGraphicsManager()->GetSceneGraph();
@@ -390,7 +390,8 @@ bool SimpleWMSBody::Do() {
       mWMSTextureUsed = false;
     }
 
-    if (!mWMSTextureUsed || !mPluginSettings->mEnableInterpolation.get() || mIntervalDuration == 0) {
+    if (!mWMSTextureUsed || !mPluginSettings->mEnableInterpolation.get() ||
+        mIntervalDuration == 0) {
       mSecondWMSTextureUsed = false;
       mCurrentSecondTexture = "";
     } // Create fading between Wms textures when interpolation is enabled.

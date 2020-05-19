@@ -36,11 +36,10 @@ namespace csp::simplewmsbodies {
 class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
  public:
   SimpleWMSBody(std::shared_ptr<cs::core::Settings> const& settings,
-      std::shared_ptr<cs::core::SolarSystem>         solarSystem,
-      std::shared_ptr<Plugin::Settings> const&       pluginSettings,
-      std::shared_ptr<cs::core::TimeControl>         timeControl,
-      std::string const& sCenterName, std::string const& sFrameName,
-      double tStartExistence, double tEndExistence);
+      std::shared_ptr<cs::core::SolarSystem>               solarSystem,
+      std::shared_ptr<Plugin::Settings> const&             pluginSettings,
+      std::shared_ptr<cs::core::TimeControl> timeControl, std::string const& sCenterName,
+      std::string const& sFrameName, double tStartExistence, double tEndExistence);
 
   SimpleWMSBody(SimpleWMSBody const& other) = delete;
   SimpleWMSBody(SimpleWMSBody&& other)      = default;
@@ -88,13 +87,14 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   glm::dvec3 mRadii;
   std::mutex mWMSMutex;
 
-  Plugin::Settings::SimpleWMSBody  mSimpleWMSBodySettings;
+  Plugin::Settings::SimpleWMSBody mSimpleWMSBodySettings;
 
-  std::vector<Plugin::Settings::WMSConfig> mWMSs;      ///< WMS configs of the active body.
-  std::shared_ptr<Plugin::Settings::WMSConfig> mActiveWMS; ///< WMS config of the active WMS data set.
-  std::shared_ptr<VistaTexture> mBackgroundTexture;    ///< The background texture of the body.
-  std::shared_ptr<VistaTexture> mWMSTexture;           ///< The WMS texture.
-  std::shared_ptr<VistaTexture> mSecondWMSTexture; ///< Second WMS texture for time interpolation.
+  std::vector<Plugin::Settings::WMSConfig> mWMSs; ///< WMS configs of the active body.
+  std::shared_ptr<Plugin::Settings::WMSConfig>
+                                mActiveWMS;         ///< WMS config of the active WMS data set.
+  std::shared_ptr<VistaTexture> mBackgroundTexture; ///< The background texture of the body.
+  std::shared_ptr<VistaTexture> mWMSTexture;        ///< The WMS texture.
+  std::shared_ptr<VistaTexture> mSecondWMSTexture;  ///< Second WMS texture for time interpolation.
   std::string                   mBackgroundTextureFile; ///< Local path to background texture.
   bool                          mWMSTextureUsed;        ///< Whether to use the WMS texture.
   bool        mSecondWMSTextureUsed = false;            ///< Whether to use the second WMS texture.
@@ -105,13 +105,13 @@ class SimpleWMSBody : public cs::scene::CelestialBody, public IVistaOpenGLDraw {
   std::string mFormat;                                  ///< Time format style.
   int         mIntervalDuration;                        ///< Duration of the current time interval.
   std::vector<TimeInterval> mTimeIntervals;             ///< Time intervals of data set.
-  std::string               mCache = "cache/texture/";   ///< Cache directory of downloaded textures.
+  std::string               mCache = "cache/texture/";  ///< Cache directory of downloaded textures.
 
   std::map<std::string, std::future<std::string>>    mTextureFilesBuffer;
   std::map<std::string, std::future<unsigned char*>> mTexturesBuffer;
   std::map<std::string, unsigned char*>              mTextures;
 
-  std::shared_ptr<Plugin::Settings>     mPluginSettings;
+  std::shared_ptr<Plugin::Settings> mPluginSettings;
 
   VistaGLSLShader        mShader;
   VistaVertexArrayObject mSphereVAO;

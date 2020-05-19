@@ -49,12 +49,12 @@ class Plugin : public cs::core::PluginBase {
     };
 
     /// The startup settings for a planet.
-    struct SimpleWMSBody {      
-      std::optional<int>     mGridResolutionX; ///< The x resolution of the body grid.
-      std::optional<int>     mGridResolutionY; ///< The y resolution of the body gird.
-      std::string            mTexture;         ///< The path to surface texture.
-      std::string            mActiveWMS;       ///< The name of the currently active WMS data set.
-      std::map<std::string, WMSConfig> mWMS;   ///< The data sets containing WMS data.
+    struct SimpleWMSBody {
+      std::optional<int> mGridResolutionX;   ///< The x resolution of the body grid.
+      std::optional<int> mGridResolutionY;   ///< The y resolution of the body gird.
+      std::string        mTexture;           ///< The path to surface texture.
+      std::string        mActiveWMS;         ///< The name of the currently active WMS data set.
+      std::map<std::string, WMSConfig> mWMS; ///< The data sets containing WMS data.
     };
 
     std::map<std::string, SimpleWMSBody> mBodies; ///< A list of bodies with their anchor names.
@@ -76,13 +76,13 @@ class Plugin : public cs::core::PluginBase {
   /// Remove the time intervals of the current data set to timeline.
   void removeTimeInterval(std::vector<TimeInterval> timeIntervals);
 
-  std::shared_ptr<Settings>                             mPluginSettings = std::make_shared<Settings>();
+  std::shared_ptr<Settings> mPluginSettings = std::make_shared<Settings>();
   std::map<std::string, std::shared_ptr<SimpleWMSBody>> mSimpleWMSBodies;
   std::vector<TimeInterval>                             mIntervalsOnTimeline;
 
   int mActiveBodyConnection = -1;
-  int mOnLoadConnection = -1;
-  int mOnSaveConnection = -1;  
+  int mOnLoadConnection     = -1;
+  int mOnSaveConnection     = -1;
 };
 
 } // namespace csp::simplewmsbodies
