@@ -119,10 +119,9 @@ void Plugin::init() {
         if (body) {
           setWMSSource(body, name);
 
-          // TODO: Move to setWMSSource???
-          removeTimeInterval(mIntervalsOnTimeline);
-          mIntervalsOnTimeline = body->getTimeIntervals();
-          addTimeInterval(mIntervalsOnTimeline, name, body->getCenterName());
+          // Replace bookmarks with timeintervals of the new WMS data set.
+          removeBookmarks();
+          addBookmarks(body->getTimeIntervals(), name, body->getCenterName(), body->getFrameName());
         }
       }));
 
@@ -130,8 +129,8 @@ void Plugin::init() {
       [this](std::shared_ptr<cs::scene::CelestialBody> const& body) {
         auto simpleWMSBody = std::dynamic_pointer_cast<SimpleWMSBody>(body);
 
-        // Remove time intervals of the old body.
-        removeTimeInterval(mIntervalsOnTimeline);
+        // Remove bookmarks from the old body.
+        removeBookmarks();
 
         mGuiManager->getGui()->callJavascript(
             "CosmoScout.sidebar.setTabEnabled", "WMS", simpleWMSBody != nullptr);
@@ -152,8 +151,9 @@ void Plugin::init() {
             mGuiManager->getGui()->callJavascript(
                 "CosmoScout.simpleWMSBodies.setWMSDataCopyright", wms.second.mCopyright);
 
-            mIntervalsOnTimeline = simpleWMSBody->getTimeIntervals();
-            addTimeInterval(mIntervalsOnTimeline, wms.first, simpleWMSBody->getCenterName());
+            // Add bookmarks to timeline from the intervals of the active WMS.
+            addBookmarks(simpleWMSBody->getTimeIntervals(), wms.first,
+                simpleWMSBody->getCenterName(), simpleWMSBody->getFrameName());
           }
         }
       });
@@ -214,6 +214,10 @@ void Plugin::onLoad() {
 
       setWMSSource(simpleWMSBody->second, settings->second.mActiveWMS);
 
+      // Add bookmarks to timeline from the intervals of the active WMS.
+      addBookmarks(simpleWMSBody->second->getTimeIntervals(), settings->second.mActiveWMS,
+          simpleWMSBody->second->getCenterName(), simpleWMSBody->second->getFrameName());
+
       ++simpleWMSBody;
     } else {
       // Else delete it.
@@ -248,6 +252,10 @@ void Plugin::onLoad() {
     simpleWMSBody->configure(settings.second);
     simpleWMSBody->setSun(mSolarSystem->getSun());
 
+    // Add bookmarks to timeline from the intervals of the active WMS.
+    addBookmarks(simpleWMSBody->getTimeIntervals(), settings.second.mActiveWMS,
+        simpleWMSBody->getCenterName(), simpleWMSBody->getFrameName());
+
     mSolarSystem->registerBody(simpleWMSBody);
     mInputManager->registerSelectable(simpleWMSBody);
   }
@@ -257,34 +265,39 @@ void Plugin::onLoad() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::removeTimeInterval(std::vector<TimeInterval> timeIntervals) {
-  for (int i = 0; i < timeIntervals.size(); i++) {
-    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mStartTime);
-    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mEndTime);
-    if (start == end) {
-      end = "";
-    }
-    std::string id = "wms" + start + end;
-    // mGuiManager->removeBookmark(id);
+void Plugin::removeBookmarks() {
+  for (auto const& id : mBookmarkIDs) {
+    mGuiManager->removeBookmark(id);
   }
+  mBookmarkIDs.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Plugin::addTimeInterval(
-    std::vector<TimeInterval> timeIntervals, std::string wmsName, std::string planetName) {
+void Plugin::addBookmarks(std::vector<TimeInterval> timeIntervals, std::string wmsName,
+    std::string planetName, std::string frameName) {
   for (int i = 0; i < timeIntervals.size(); i++) {
-    std::string start = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mStartTime);
-    std::string end   = utils::timeToString("%Y-%m-%dT%H:%M", timeIntervals.at(i).mEndTime);
-    if (start == end) {
-      end = "";
+    std::string start = utils::timeToString("%Y-%m-%d %H:%M:%S", timeIntervals.at(i).mStartTime);
+    std::string end   = utils::timeToString("%Y-%m-%d %H:%M:%S", timeIntervals.at(i).mEndTime);
+
+    cs::core::Settings::Bookmark::Location bookmarkLocation;
+    bookmarkLocation.mCenter = planetName;
+    bookmarkLocation.mFrame  = frameName;
+
+    cs::core::Settings::Bookmark::Time bookmarkTime;
+    bookmarkTime.mStart = start;
+    if (start != end) {
+      bookmarkTime.mEnd = end;
     }
-    std::string id = "wms" + start + end;
 
     cs::core::Settings::Bookmark bookmark;
-    mGuiManager->addBookmark(bookmark); // TODO: finish
-    // mGuiManager->addEventToTimenavigationBar(
-    //     start, end, id, "Valid WMS Time", "border-color: green", wmsName, planetName, "");
+    bookmark.mName     = "WMS - " + wmsName;
+    bookmark.mColor    = glm::vec3(0.6, 0.45, 0.7);
+    bookmark.mLocation = bookmarkLocation;
+    bookmark.mTime     = bookmarkTime;
+	
+    int bookmarkID = mGuiManager->addBookmark(bookmark);
+    mBookmarkIDs.emplace_back(bookmarkID);
   }
 }
 

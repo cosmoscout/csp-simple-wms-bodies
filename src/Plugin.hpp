@@ -69,16 +69,16 @@ class Plugin : public cs::core::PluginBase {
   Settings::SimpleWMSBody& getBodySettings(std::shared_ptr<SimpleWMSBody> const& body) const;
   void setWMSSource(std::shared_ptr<SimpleWMSBody> const& body, std::string const& name) const;
 
-  /// Add the time intervals of the current data set to timeline.
-  void addTimeInterval(
-      std::vector<TimeInterval> timeIntervals, std::string wmsName, std::string planetName);
+  /// Add bookmarks to the timeline from time intervals of the current data set.
+  void addBookmarks(std::vector<TimeInterval> timeIntervals, std::string wmsName,
+      std::string planetName, std::string frameName);
 
-  /// Remove the time intervals of the current data set to timeline.
-  void removeTimeInterval(std::vector<TimeInterval> timeIntervals);
+  /// Remove the current bookmarks.
+  void removeBookmarks();
 
   std::shared_ptr<Settings> mPluginSettings = std::make_shared<Settings>();
   std::map<std::string, std::shared_ptr<SimpleWMSBody>> mSimpleWMSBodies;
-  std::vector<TimeInterval>                             mIntervalsOnTimeline;
+  std::vector<int>                                      mBookmarkIDs;
 
   int mActiveBodyConnection = -1;
   int mOnLoadConnection     = -1;
