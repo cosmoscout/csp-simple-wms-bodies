@@ -80,9 +80,11 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
   // Add time string to map server request if time is specified
   if (time != "") {
     requestStr += "&TIME=";
-
     requestStr += time;
+
     std::replace(time.begin(), time.end(), '/', '-');
+    std::replace(time.begin(), time.end(), ':', '-');
+
     cacheFile = cacheDir + time + ".png";
   } else {
     cacheFile = cacheDir + layerFixed + ".png";

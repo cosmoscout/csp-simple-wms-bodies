@@ -135,7 +135,7 @@ void parseIsoString(std::string const& isoString, std::vector<TimeInterval>& tim
     if (endDate == "") {
       end                   = start;
       tmp.mIntervalDuration = 0;
-      tmp.mFormat           = "%Y-%m-%dT%H:%MZ";
+      tmp.mFormat           = "%Y-%m-%dT%H:%M:%SZ";
     } else {
       timeDuration(duration, tmp.mIntervalDuration, tmp.mFormat);
       convertIsoDate(endDate, end);
