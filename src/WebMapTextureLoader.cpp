@@ -13,6 +13,9 @@
 
 #include <curlpp/Infos.hpp>
 #include <curlpp/Options.hpp>
+#include <boost/algorithm/string.hpp>
+#include <boost/range/algorithm/replace_copy_if.hpp>
+//#include <boost/algorithm/string/regex.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -43,7 +46,12 @@ bool fileExist(const char* fileName) {
 
 std::string WebMapTextureLoader::loadTexture(std::string time, std::string requestStr,
     std::string const& layer, std::string const& mapCache) {
-  std::string cacheDir = mapCache + "/" + layer + "/";
+
+  // Replace forbidden characters in layer string before creating cache dir.
+  std::string layerFixed;
+  boost::replace_copy_if(layer, std::back_inserter(layerFixed), boost::is_any_of("*.,:[|]\""), '_');
+
+  std::string cacheDir = mapCache + "/" + layerFixed + "/";
 
   // Add year subdirectory, if time is specified.
   if (time != "") {
@@ -77,7 +85,7 @@ std::string WebMapTextureLoader::loadTexture(std::string time, std::string reque
     std::replace(time.begin(), time.end(), '/', '-');
     cacheFile = cacheDir + time + ".png";
   } else {
-    cacheFile = cacheDir + layer + ".png";
+    cacheFile = cacheDir + layerFixed + ".png";
   }
 
   // No need to download the file if it is already in cache.
