@@ -295,7 +295,7 @@ void Plugin::addBookmarks(std::vector<TimeInterval> timeIntervals, std::string w
     bookmark.mColor    = glm::vec3(0.6, 0.45, 0.7);
     bookmark.mLocation = bookmarkLocation;
     bookmark.mTime     = bookmarkTime;
-	
+
     int bookmarkID = mGuiManager->addBookmark(bookmark);
     mBookmarkIDs.emplace_back(bookmarkID);
   }

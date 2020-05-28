@@ -11,11 +11,10 @@
 #include "../../../src/cs-utils/logger.hpp"
 #include "logger.hpp"
 
-#include <curlpp/Infos.hpp>
-#include <curlpp/Options.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/range/algorithm/replace_copy_if.hpp>
-//#include <boost/algorithm/string/regex.hpp>
+#include <curlpp/Infos.hpp>
+#include <curlpp/Options.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
