@@ -30,6 +30,8 @@ class WebMapTextureLoader {
   std::future<unsigned char*> loadTextureFromFileAsync(std::string const& fileName);
 
  private:
+  bool fileExist(const char* fileName);
+
   cs::utils::ThreadPool mThreadPool;
 };
 

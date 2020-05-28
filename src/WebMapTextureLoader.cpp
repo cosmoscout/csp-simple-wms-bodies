@@ -37,7 +37,7 @@ WebMapTextureLoader::~WebMapTextureLoader() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool fileExist(const char* fileName) {
+bool WebMapTextureLoader::fileExist(const char* fileName) {
   std::ifstream infile(fileName);
   return infile.good();
 }
